@@ -17,14 +17,18 @@ set(CKRASTERIZERLIB_SRCS
         )
 
 add_library(CKRasterizerLib STATIC ${CKRASTERIZERLIB_SRCS} ${CKRASTERIZERLIB_PUBLIC_HDRS} ${CKRASTERIZERLIB_PRIVATE_HDRS})
+target_include_directories(CKRasterizerLib PUBLIC
+        $<BUILD_INTERFACE:${CKRASTERIZERLIB_INC_DIR}>
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+        )
+target_link_libraries(CKRasterizerLib PUBLIC CK2 VxMath)
 
 add_library(CKNULLRasterizer SHARED ${CKRASTERIZERLIB_SRCS} ${CKRASTERIZERLIB_PUBLIC_HDRS} ${CKRASTERIZERLIB_PRIVATE_HDRS})
 set_target_properties(CKNULLRasterizer PROPERTIES DEFINE_SYMBOL CKNULLRASTERIZER_DLL)
+target_include_directories(CKNULLRasterizer PRIVATE ${CKRASTERIZERLIB_INC_DIR})
+target_link_libraries(CKNULLRasterizer PRIVATE CK2 VxMath)
 
 foreach (LIB IN ITEMS CKRasterizerLib CKNULLRasterizer)
-    target_include_directories(${LIB} PUBLIC ${CKRASTERIZERLIB_INC_DIR})
-    target_link_libraries(${LIB} PUBLIC CK2 VxMath)
-
     # Disable msvc unsafe warnings
     target_compile_definitions(${LIB} PRIVATE
             $<$<C_COMPILER_ID:MSVC>:_CRT_SECURE_NO_WARNINGS>
@@ -32,21 +36,34 @@ foreach (LIB IN ITEMS CKRasterizerLib CKNULLRasterizer)
             )
 endforeach ()
 
-if (NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
-    install(TARGETS CKRasterizerLib CKNULLRasterizer
-            RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
-            ARCHIVE DESTINATION "${INSTALL_LIB_DIR}"
-            LIBRARY DESTINATION "${INSTALL_LIB_DIR}")
-endif ()
+configure_package_config_file("${PROJECT_SOURCE_DIR}/CMake/CKRasterizerLibConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/CKRasterizerLibConfig.cmake"
+        INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/CKRasterizerLib"
+        )
 
-if (NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
-    install(FILES ${CKRASTERIZERLIB_PUBLIC_HDRS} DESTINATION "${INSTALL_INC_DIR}")
-endif ()
+write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/CKRasterizerLibConfigVersion.cmake"
+        COMPATIBILITY SameMinorVersion
+)
 
-set(CPACK_PACKAGE_NAME ${PROJECT_NAME})
-set(CPACK_PACKAGE_VENDOR Kakuty)
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CMAKE_PROJECT_VERSION}")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "${CPACK_PACKAGE_NAME}")
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
-set(CPACK_GENERATOR "ZIP")
-include(CPack)
+install(FILES
+        "${CMAKE_CURRENT_BINARY_DIR}/CKRasterizerLibConfig.cmake"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/CKRasterizerLib"
+        )
+
+install(TARGETS CKRasterizerLib
+        EXPORT CKRasterizerLibTargets
+        ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        )
+
+install(TARGETS CKNULLRasterizer
+        RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+        )
+
+install(EXPORT "CKRasterizerLibTargets"
+        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/CKRasterizerLib")
+
+install(FILES ${CKRASTERIZERLIB_PUBLIC_HDRS}
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}")
