@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(CKRasterizerLib VERSION 0.1.0)
 
-set(CMAKE_CXX_STANDARD 98 CACHE STRING "C++ standard to conform to")
+set(CMAKE_CXX_STANDARD 98)
 set(CMAKE_CXX_STANDARD_REQUIRED NO)
 set(CMAKE_CXX_EXTENSIONS YES)
 
@@ -34,7 +34,11 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif ()
 
 # Generate a CompilationDatabase (compile_commands.json)
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+
+set(VIRTOOLS_SDK_PATH "${VIRTOOLS_SDK_PATH}" CACHE PATH "Path to the Virtools SDK")
+set(VIRTOOLS_SDK_FETCH_FROM_GIT "${VIRTOOLS_SDK_FETCH_FROM_GIT}" CACHE BOOL "Set to ON to fetch copy of SDK from git if not otherwise locatable")
+set(VIRTOOLS_SDK_FETCH_FROM_GIT_PATH "${VIRTOOLS_SDK_FETCH_FROM_GIT_PATH}" CACHE FILEPATH "location to download SDK")
 
 if (NOT VIRTOOLS_SDK_PATH)
     if (NOT VIRTOOLS_SDK_FETCH_FROM_GIT)
