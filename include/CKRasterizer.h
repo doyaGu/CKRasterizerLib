@@ -1,3 +1,17 @@
+/**
+ * @file CKRasterizer.h
+ * @brief The base classes declaration for rasterizer.
+ *
+ * The default implementation of the render engine in Virtools use rasterizer as a common interface to
+ * access a render device.
+ *
+ * A Rasterizer DLL must provide the implementation for the 3 base classes by overloading them:
+ *  - CKRasterizer: Top level class (One instance per rasterizer) which upon creation should check for available driver.
+ *  - CKRasterizerDriver: One instance should be created for each available driver (graphic card, software, hardware,
+ *  etc.). It is used to store capabilities and create rendering contexts.
+ *  - CKRasterizerContext: A rendering context with all the methods to create/load textures, setup lights, materials,
+ *  render states, and draw primitives.
+ */
 #ifndef CKRASTERIZER_H
 #define CKRASTERIZER_H
 
@@ -6,18 +20,18 @@
 #include "CKRasterizerEnums.h"
 #include "CKRasterizerTypes.h"
 
-/**********************************************************
- The render engine will call the CKRasterizerGetInfo function (see below)
- to gain access to rasterizer information. This information should be
- stored in CKRasterizerInfo structure.
-***********************************************************/
+/**
+ * The render engine will call the CKRasterizerGetInfo function
+ * to gain access to rasterizer information. This information should be
+ * stored in CKRasterizerInfo structure.
+ */
 struct CKRasterizerInfo
 {
-    XString DllName;              // Filled by the render engine when parsing Dlls
-    XString Desc;                 // Description for this rasterizer (eg: "Open GL Rasterizer")
-    INSTANCE_HANDLE DllInstance;  // Filled by the render engine when loading the DLL
-    CKRST_STARTFUNCTION StartFct; // A pointer to a function that will create the CKRasterizer Instance
-    CKRST_CLOSEFUNCTION CloseFct; // A pointer to a function that will destroy the CKRasterizer Instance
+    XString DllName;              /// Filled by the render engine when parsing Dlls
+    XString Desc;                 /// Description for this rasterizer (eg: "Open GL Rasterizer")
+    INSTANCE_HANDLE DllInstance;  /// Filled by the render engine when loading the DLL
+    CKRST_STARTFUNCTION StartFct; /// A pointer to a function that will create the CKRasterizer Instance
+    CKRST_CLOSEFUNCTION CloseFct; /// A pointer to a function that will destroy the CKRasterizer Instance
     CKRST_OPTIONFCT OptionFct;
 
     CKRasterizerInfo()
@@ -29,33 +43,29 @@ struct CKRasterizerInfo
     }
 };
 
-/*******************************************
-+ There is only one function a rasterizer Dll is supposed
-to export :"CKRasterizerGetInfo", it will be used by the render engine
-to retrieve information about the plugin :
-    - Description
-******************************************/
+/**
+ * There is only one function that a rasterizer dll is supposed to export: "CKRasterizerGetInfo",
+ * it will be used by the render engine to retrieve information about the plugin.
+ */
 typedef void (*CKRST_GETINFO)(CKRasterizerInfo *);
 
-/****************************************************************
-Main class for rasterizer declaration
-
-  + A render engine is started by calling CKRasterizerStart which will try
-  to create a CKRasterizer object and to initialize it.
-
-  + It will enumerate and create the available drivers on the system.
-
-  + If no driver for 3D rendering is available the function should fail and return NULL.
-
-  + The CKRasterizer object is only used to
-        - generate texture,sprites and vertex buffer index
-        ( which are simple CKDWORDs to identify a texture or VB across different contexts or drivers ).
-        - access the list of available driver
-
-  + Several rasterizers can work together in which case texture indices should be the same across
-  them. Each rasterizer must warn the others of its existence through LinkRasterizer
-  (It is automatically called by the render engine upon registration of the rasterizers)
-****************************************************************/
+/// Main class for rasterizer declaration
+/**
+ * A render engine is started by calling CKRasterizerStart which will try to create a CKRasterizer and initialize it.
+ *
+ * It will enumerate and create the available drivers on the system.
+ *
+ * If no driver for 3D rendering is available, the function should fail and return NULL.
+ *
+ * The CKRasterizer object is only used to
+ *  - Generate texture, sprites, and vertex buffer index
+ *    (which are simple CKDWORDs to identify a texture or VB across different contexts or drivers).
+ *  - Access the list of available driver
+ *
+ *  Several rasterizers can work together in which case texture indices should be the same across them.
+ *  Each rasterizer must warn the others of its existence through LinkRasterizer.
+ *  (It is automatically called by the render engine upon registration of the rasterizers)
+ */
 class CKRasterizer
 {
 public:
@@ -97,17 +107,21 @@ public:
 
     XClassArray<CKDriverProblems> m_ProblematicDrivers; // List of driver with identified problems
     XArray<CKRasterizerDriver *> m_Drivers;
+
     // Implementation specific data to follow....
 };
 
-/****************************************************************
-+ Once a rasterizer is created and started it enumerates all available drivers
- depending on the number of graphic adapters installed and their
- different implementation (Hardware,software,Hardware Transform & Lighting,etc...)
-
-+ Once a driver is chosen (according to its capabilities for example) it can be use
- to create one more contexts for drawing (see CreateContext and CKRasterizerContext)
-****************************************************************/
+/// Rasterizer driver abstraction class
+/**
+ * Once a rasterizer is created and started it enumerates all available drivers depending on the number of
+ * graphic adapters installed and their different implementation (Hardware, software, hardware transform & lighting,
+ * etc.).
+ *
+ * Once a driver is chosen (according to its capabilities for example) it can be used to create one or more contexts
+ * for drawing
+ * \sa \ref CreateContext
+ * \sa \ref CKRasterizerContext
+ */
 class CKRasterizerDriver
 {
 public:
@@ -135,61 +149,55 @@ public:
     CKBOOL m_Stereo;                             // Support stereoscopic  ?
 };
 
-/***************************************************
- Utility : Convert the attenuation factors from DX5 model
-    A(d) = a0+ a1.(1-d/R) + a2.(1-d/R)
- to DX7 or GL attenuation model
-     A(d) = 1/(a0 + a1.d + a2.d)
-( The result is not exactly the same :(
-*******************************************************/
+/**
+ * This utility function converts the attenuation factors from DX5 model.
+ * A(d) = a0 + a1 * (1 - d / R) + a2 * (1 - d / R)
+ * To DX7 or GL attenuation model
+ * A(d) = 1 / (a0 + a1.d + a2.d)
+ *
+ * \remark the result is not exactly the same.
+ */
 void ConvertAttenuationModelFromDX5(float &_a0, float &_a1, float &_a2, float range);
 
-/***************************************************
- Utility : From a given DrawPrimitiveDataStructure :
- returns the corresponding Vertex Buffer Format (CKRST_VERTEXFORMAT) and the
- size of a vertex...
-*******************************************************/
+/**
+ * This utility function returns the Vertex Buffer Format (CKRST_VERTEXFORMAT) and the size of a vertex from the given
+ * draw primitive options.
+ */
 CKDWORD CKRSTGetVertexFormat(CKRST_DPFLAGS DpFlags, CKDWORD &VertexSize);
 
-/***************************************************
- Utility : From a given CKRST_VERTEXFORMAT format :
- returns the corresponding size of a vertex...
-*******************************************************/
+/**
+ * This utility function returns the size of a vertex from a given CKRST_VERTEXFORMAT format.
+ */
 CKDWORD CKRSTGetVertexSize(CKDWORD VertexFormat);
 
-/**************************************************
-Copy the content of a DrawPrimitive Data structure inside
-a Vertex Buffer memory buffer ( must have been obtained by a call to Lock)
-No Assumption or tests are made to check the coherence between the vertex format
-and the incoming data
-returns the new location of the current VBuffer memory pointer
-To use in coordination with LockVertexBuffer
-*****************************************************/
+/**
+ * This utility function returns the new location of the current VBuffer memory pointer.
+ * Copy the content of a DrawPrimitive Data structure inside a Vertex Buffer memory buffer.
+ * No assumption or tests are made to check the coherence between the vertex format and incoming data.
+ */
 CKBYTE *CKRSTLoadVertexBuffer(CKBYTE *VBMem, CKDWORD VFormat, CKDWORD VSize, VxDrawPrimitiveData *data);
 
-/**************************************************
-Setup the DpData structure (data pointers and stride only) according
-the DpData.Flags and VBMem pointer...
-*****************************************************/
+/**
+ * This utility function setups the DpData structure (data pointers and stride only)
+ * according the DpData.Flags and VBMem pointer...
+ */
 void CKRSTSetupDPFromVertexBuffer(CKBYTE *VBMem, CKVertexBufferDesc *VB, VxDrawPrimitiveData &DpData);
 
-/****************************************************************
-+ A context is used to identify where the rendering take place and
-to specify how primitives should be drawn.
-
-+ A context is created by its driver, either fullscreen or windowed.
-
-+ A context is also used to create textures,sprites or vertex buffer
-  and to load their content. When accessing to textures, sprites or vertex buffer
-  one must use an index identifying the object, this object must have been
-  created previously by CKRasterizer::CreateObjectIndex() (CKRST_OBJ_TEXTURE,CKRST_OBJ_SPRITE or
-  CKRST_OBJ_VERTEXBUFFER). The object index is shared across all rasterizer object
-  so there is no need to recreate it when destroying/creating contexts
-
-+ Several methods are here to set the different parameters of the render
-  engine : Lighting states( Material and Light), Viewport States,
-  Transformation states, Render States and Texture Stage States
-****************************************************************/
+/// Rasterizer context abstraction class
+/**
+ * A context is used to identify where the rendering take place and to specify how primitives should be drawn.
+ *
+ * A context is created by its driver, either fullscreen or windowed.
+ *
+ * A context is also used to create textures,sprites or vertex buffer and to load their context.
+ * When accessing to textures, sprites or vertex buffer, you must use an index identifying the object,
+ * this object must have been created previously by \ref CreateObjectIndex.
+ * The object index is shared across all rasterizer object, so there is no need to recreate it when destroying/creating
+ * contexts.
+ *
+ * Several methods are here to set the different parameters of the render engine:
+ * Lighting states(Material and Light), Viewport States, Transformation states, Render States
+ */
 class CKRasterizerContext
 {
 public:
