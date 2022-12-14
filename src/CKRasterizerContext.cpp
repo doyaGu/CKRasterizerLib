@@ -56,19 +56,19 @@ CKRasterizerContext::CKRasterizerContext()
       m_DirtyRects()
 {
     m_Driver = NULL;
-    m_Owner = NULL;
     m_PosX = 0;
     m_PosY = 0;
     m_Width = 0;
-    m_RefreshRate = 0;
-    m_PixelFormat = UNKNOWN_PF;
+    m_Height = 0;
+    m_Window = NULL;
     m_Fullscreen = 0;
-    m_SceneBegined = 0;
+    m_RefreshRate = 0;
+    m_SceneBegined = FALSE;
     m_MatrixUptodate = 0;
     m_TransparentMode = 0;
-    m_Height = 0;
     m_Bpp = 0;
     m_ZBpp = 0;
+    m_PixelFormat = UNKNOWN_PF;
     m_StencilBpp = 0;
 
     m_TotalMatrix = VxMatrix::Identity();
@@ -652,7 +652,7 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         for (int i = 0; i < wc; ++i)
         {
             CKSPRTextInfo *info = &sprite->Textures[j * i + i];
-            info->IndexTexture = m_Owner->CreateObjectIndex(CKRST_OBJ_TEXTURE);
+            info->IndexTexture = m_Driver->m_Owner->CreateObjectIndex(CKRST_OBJ_TEXTURE);
             info->x = texInfo[i].x;
             info->y = texInfo[j].y;
             info->w = texInfo[i].w;
