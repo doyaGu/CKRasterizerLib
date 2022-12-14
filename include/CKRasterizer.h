@@ -414,7 +414,6 @@ public:
 
 public:
     CKRasterizerDriver *m_Driver; // Driver that was used to create this context
-    CKRasterizer *m_Owner;        // Main rasterizer object
 
     //----- Size Info
     CKDWORD m_PosX;   // Top left corner of the context (relative to its window)
@@ -432,6 +431,7 @@ public:
     CKDWORD m_Fullscreen;  // Currently fullscreen ?
     CKDWORD m_RefreshRate; // Fullscreen refresh rate
 
+    WIN_HANDLE m_Window;   // Window on which the rendering occurs.
     CKBOOL m_SceneBegined;
 
     //------- Transformation matrices (World, View, Projection)
