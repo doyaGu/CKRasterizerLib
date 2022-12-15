@@ -243,8 +243,7 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
 
 void CKRasterizerContext::UpdateObjectArrays(CKRasterizer *rst)
 {
-    int objectCount = rst->m_ObjectsIndex.Size();
-    int newSize = objectCount + 1;
+    int newSize = rst->m_ObjectsIndex.Size();
     m_Textures.Resize(newSize);
     m_Sprites.Resize(newSize);
     m_VertexBuffers.Resize(newSize);
@@ -252,14 +251,14 @@ void CKRasterizerContext::UpdateObjectArrays(CKRasterizer *rst)
     m_VertexShaders.Resize(newSize);
     m_PixelShaders.Resize(newSize);
 
-    int count = m_Textures.Size();
-    int gapSize = (objectCount - count) * sizeof(void *);
-    memset(&m_Textures[count], 0, gapSize);
-    memset(&m_Sprites[count], 0, gapSize);
-    memset(&m_VertexBuffers[count], 0, gapSize);
-    memset(&m_IndexBuffers[count], 0, gapSize);
-    memset(&m_VertexShaders[count], 0, gapSize);
-    memset(&m_PixelShaders[count], 0, gapSize);
+    int oldSize = m_Textures.Size();
+    int gapSize = (newSize - oldSize) * sizeof(void *);
+    memset(&m_Textures[oldSize], 0, gapSize);
+    memset(&m_Sprites[oldSize], 0, gapSize);
+    memset(&m_VertexBuffers[oldSize], 0, gapSize);
+    memset(&m_IndexBuffers[oldSize], 0, gapSize);
+    memset(&m_VertexShaders[oldSize], 0, gapSize);
+    memset(&m_PixelShaders[oldSize], 0, gapSize);
 }
 
 CKTextureDesc *CKRasterizerContext::GetTextureData(CKDWORD Texture)
