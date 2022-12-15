@@ -431,7 +431,7 @@ public:
     CKDWORD m_Fullscreen;  // Currently fullscreen ?
     CKDWORD m_RefreshRate; // Fullscreen refresh rate
 
-    WIN_HANDLE m_Window;   // Window on which the rendering occurs.
+    WIN_HANDLE m_Window; // Window on which the rendering occurs.
     CKBOOL m_SceneBegined;
 
     //------- Transformation matrices (World, View, Projection)
@@ -566,7 +566,8 @@ Small util to get the position of a given bit...
 inline int GetFirstBitpos(CKDWORD data)
 {
 #ifdef WIN32
-    __asm {
+    __asm
+    {
         mov eax, data
         and eax, eax
         jz exitnow
