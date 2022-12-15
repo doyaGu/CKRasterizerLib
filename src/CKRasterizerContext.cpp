@@ -76,12 +76,12 @@ CKRasterizerContext::CKRasterizerContext()
     m_ViewMatrix = VxMatrix::Identity();
     m_ProjectionMatrix = VxMatrix::Identity();
 
-    m_Textures.Resize(INIT_OBJECTSLOTS + 1);
-    m_Sprites.Resize(INIT_OBJECTSLOTS + 1);
-    m_VertexBuffers.Resize(INIT_OBJECTSLOTS + 1);
-    m_IndexBuffers.Resize(INIT_OBJECTSLOTS + 1);
-    m_VertexShaders.Resize(INIT_OBJECTSLOTS + 1);
-    m_PixelShaders.Resize(INIT_OBJECTSLOTS + 1);
+    m_Textures.Resize(INIT_OBJECTSLOTS);
+    m_Sprites.Resize(INIT_OBJECTSLOTS);
+    m_VertexBuffers.Resize(INIT_OBJECTSLOTS);
+    m_IndexBuffers.Resize(INIT_OBJECTSLOTS);
+    m_VertexShaders.Resize(INIT_OBJECTSLOTS);
+    m_PixelShaders.Resize(INIT_OBJECTSLOTS);
 
     m_Textures.Memset(NULL);
     m_Sprites.Memset(NULL);
