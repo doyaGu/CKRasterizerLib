@@ -253,12 +253,15 @@ void CKRasterizerContext::UpdateObjectArrays(CKRasterizer *rst)
 
     int oldSize = m_Textures.Size();
     int gapSize = (newSize - oldSize) * sizeof(void *);
-    memset(&m_Textures[oldSize], 0, gapSize);
-    memset(&m_Sprites[oldSize], 0, gapSize);
-    memset(&m_VertexBuffers[oldSize], 0, gapSize);
-    memset(&m_IndexBuffers[oldSize], 0, gapSize);
-    memset(&m_VertexShaders[oldSize], 0, gapSize);
-    memset(&m_PixelShaders[oldSize], 0, gapSize);
+    if (gapSize > 0)
+    {
+        memset(&m_Textures[oldSize], 0, gapSize);
+        memset(&m_Sprites[oldSize], 0, gapSize);
+        memset(&m_VertexBuffers[oldSize], 0, gapSize);
+        memset(&m_IndexBuffers[oldSize], 0, gapSize);
+        memset(&m_VertexShaders[oldSize], 0, gapSize);
+        memset(&m_PixelShaders[oldSize], 0, gapSize);
+    }
 }
 
 CKTextureDesc *CKRasterizerContext::GetTextureData(CKDWORD Texture)
