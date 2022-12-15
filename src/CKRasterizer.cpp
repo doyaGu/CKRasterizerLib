@@ -40,20 +40,21 @@ void CKNULLRasterizerClose(CKRasterizer *rst)
 
 #endif // CKNULLRASTERIZER_DLL
 
-CKRasterizer::CKRasterizer() : m_Objects(),
-                               m_ObjectsIndex(),
-                               m_OtherRasterizers(),
-                               m_ProblematicDrivers(),
-                               m_Drivers(),
-                               m_FullscreenContext(NULL)
+CKRasterizer::CKRasterizer()
+    : m_Objects(),
+      m_ObjectsIndex(),
+      m_OtherRasterizers(),
+      m_ProblematicDrivers(),
+      m_Drivers(),
+      m_FullscreenContext(NULL)
 {
     m_ObjectsIndex.Resize(INIT_OBJECTSLOTS);
     m_ObjectsIndex.Fill(0);
-    memset(m_ObjectsIndex.Begin(), 4, 256);
+    memset(m_ObjectsIndex.Begin(), CKRST_OBJ_VERTEXBUFFER, INIT_OBJECTSLOTS / 2);
 
     m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_TEXTURE)] = 1;
     m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_SPRITE)] = 1;
-    m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_VERTEXBUFFER)] = 256;
+    m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_VERTEXBUFFER)] = INIT_OBJECTSLOTS / 2;
     m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_INDEXBUFFER)] = 1;
     m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_VERTEXSHADER)] = 1;
     m_FirstFreeIndex[ObjTypeIndex(CKRST_OBJ_PIXELSHADER)] = 1;
@@ -75,8 +76,8 @@ CKBOOL CKRasterizer::Start(WIN_HANDLE AppWnd)
 
 CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers)
 {
+    int i = 0;
     int objectsIndexCount = m_ObjectsIndex.Size();
-    int i;
     for (i = m_FirstFreeIndex[ObjTypeIndex(Type)]; i < objectsIndexCount; ++i)
         if ((Type & m_ObjectsIndex[i]) == 0)
             break;
@@ -84,7 +85,8 @@ CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers
     if (i > objectsIndexCount)
     {
         m_ObjectsIndex.Resize(2 * i);
-        memset(m_ObjectsIndex.At(i), 0, i);
+        memset(&m_ObjectsIndex[i], 0, i);
+
         int driverCount = GetDriverCount();
         for (int d = 0; d < driverCount; d++)
         {
@@ -102,8 +104,10 @@ CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers
     m_FirstFreeIndex[ObjTypeIndex(Type)] = i + 1;
 
     if (WarnOthers)
+    {
         for (CKRasterizer **it = m_OtherRasterizers.Begin(); it != m_OtherRasterizers.End(); ++it)
             (*it)->CreateObjectIndex(Type, FALSE);
+    }
 
     return i;
 }
@@ -115,7 +119,7 @@ CKBOOL CKRasterizer::ReleaseObjectIndex(CKDWORD ObjectIndex, CKRST_OBJECTTYPE Ty
     if ((m_ObjectsIndex[ObjectIndex] & Type) == 0)
         return FALSE;
 
-    m_ObjectsIndex[ObjectIndex] &= ~Type;
+    m_ObjectsIndex[ObjectIndex] &= ~(CKBYTE)Type;
 
     int driverCount = GetDriverCount();
     for (int d = 0; d < driverCount; d++)
@@ -136,7 +140,7 @@ CKBOOL CKRasterizer::ReleaseObjectIndex(CKDWORD ObjectIndex, CKRST_OBJECTTYPE Ty
         for (CKRasterizer **it = m_OtherRasterizers.Begin(); it != m_OtherRasterizers.End(); ++it)
             (*it)->ReleaseObjectIndex(ObjectIndex, Type, FALSE);
 
-    return 0;
+    return TRUE;
 }
 
 XBYTE *CKRasterizer::AllocateObjects(int size)
@@ -313,16 +317,12 @@ CKBOOL CKRasterizer::LoadVideoCardFile(const char *FileName)
     return TRUE;
 }
 
-CKDriverProblems *
-CKRasterizer::FindDriverProblems(const XString &Vendor, const XString &Renderer, const XString &Version,
-                                 const XString &DeviceDesc, int Bpp)
+CKDriverProblems *CKRasterizer::FindDriverProblems(const XString &Vendor, const XString &Renderer, const XString &Version, const XString &DeviceDesc, int Bpp)
 {
-
     if (m_ProblematicDrivers.Size() == 0)
         return NULL;
 
-    for (XClassArray<CKDriverProblems>::Iterator it = m_ProblematicDrivers.Begin();
-         it != m_ProblematicDrivers.End(); ++it)
+    for (XClassArray<CKDriverProblems>::Iterator it = m_ProblematicDrivers.Begin(); it != m_ProblematicDrivers.End(); ++it)
     {
         if (Vendor != "" && it->m_Vendor == Vendor)
         {
