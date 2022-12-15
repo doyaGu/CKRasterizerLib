@@ -244,17 +244,17 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
 void CKRasterizerContext::UpdateObjectArrays(CKRasterizer *rst)
 {
     int newSize = rst->m_ObjectsIndex.Size();
-    m_Textures.Resize(newSize);
-    m_Sprites.Resize(newSize);
-    m_VertexBuffers.Resize(newSize);
-    m_IndexBuffers.Resize(newSize);
-    m_VertexShaders.Resize(newSize);
-    m_PixelShaders.Resize(newSize);
-
     int oldSize = m_Textures.Size();
-    int gapSize = (newSize - oldSize) * sizeof(void *);
-    if (gapSize > 0)
+    if (newSize != oldSize)
     {
+        m_Textures.Resize(newSize);
+        m_Sprites.Resize(newSize);
+        m_VertexBuffers.Resize(newSize);
+        m_IndexBuffers.Resize(newSize);
+        m_VertexShaders.Resize(newSize);
+        m_PixelShaders.Resize(newSize);
+
+        int gapSize = (newSize - oldSize) * sizeof(void *);
         memset(&m_Textures[oldSize], 0, gapSize);
         memset(&m_Sprites[oldSize], 0, gapSize);
         memset(&m_VertexBuffers[oldSize], 0, gapSize);
