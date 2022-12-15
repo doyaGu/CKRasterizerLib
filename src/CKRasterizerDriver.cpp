@@ -39,14 +39,18 @@ void CKRasterizerDriver::InitNULLRasterizerCaps(CKRasterizer *Owner)
     m_CapsUpToDate = TRUE;
     m_Hardware = FALSE;
     m_DriverIndex = 0;
-    m_DisplayModes.Resize(2);
-    m_DisplayModes[0].Bpp = 32;
-    m_DisplayModes[0].Width = 640;
-    m_DisplayModes[0].Height = 480;
-    m_DisplayModes[0].RefreshRate = 0;
+
+    m_DisplayModes.Resize(1);
+    VxDisplayMode &dm = m_DisplayModes[0];
+    dm.Bpp = 32;
+    dm.Width = 640;
+    dm.Height = 480;
+    dm.RefreshRate = 0;
+
     m_TextureFormats.Resize(1);
     VxPixelFormat2ImageDesc(_32_ARGB8888, m_TextureFormats[0].Format);
+
     memset(&m_3DCaps, 0, sizeof(m_3DCaps));
     memset(&m_2DCaps, 0, sizeof(m_2DCaps));
-    m_2DCaps.Caps = 7;
+    m_2DCaps.Caps = CKRST_2DCAPS_WINDOWED | CKRST_2DCAPS_3D | CKRST_2DCAPS_GDI;
 }
