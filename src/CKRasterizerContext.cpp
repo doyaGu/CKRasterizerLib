@@ -692,3 +692,32 @@ void CKRasterizerContext::UpdateMatrices(CKDWORD Flags)
         m_MatrixUptodate |= Flags;
     }
 }
+
+CKDWORD CKRasterizerContext::GetDynamicVertexBuffer(CKDWORD VertexFormat, CKDWORD VertexCount, CKDWORD VertexSize, CKDWORD AddKey)
+{
+    if ((m_Driver->m_3DCaps.CKRasterizerSpecificCaps & CKRST_SPECIFICCAPS_CANDOVERTEXBUFFER) == 0)
+        return 0;
+
+    CKDWORD index = (AddKey << 7) | ((VertexFormat & (CKRST_VF_NORMAL | CKRST_VF_RASTERPOS) | ((VertexFormat >> 3) & 0x1F8) >> 2)) + 1;
+
+    CKVertexBufferDesc *vb = m_VertexBuffers[index];
+    if (!vb || vb->m_MaxVertexCount < VertexCount)
+    {
+        if (vb)
+        {
+            delete vb;
+            m_VertexBuffers[index] = NULL;
+        }
+
+        CKVertexBufferDesc nvb;
+        nvb.m_Flags = CKRST_VB_WRITEONLY | CKRST_VB_DYNAMIC;
+        nvb.m_VertexFormat = VertexFormat;
+        nvb.m_VertexSize = VertexSize;
+        nvb.m_MaxVertexCount = (VertexCount + 100 > DEFAULT_VB_SIZE) ? VertexCount + 100 : DEFAULT_VB_SIZE;
+        if (AddKey != 0)
+            nvb.m_Flags |= CKRST_VB_SHARED;
+        CreateObject(index, CKRST_OBJ_VERTEXBUFFER, &nvb);
+    }
+
+    return index;
+}

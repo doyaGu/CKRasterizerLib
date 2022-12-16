@@ -412,6 +412,16 @@ public:
         m_DirtyRects.Resize(0);
     }
 
+    //-------------- Dynamic Vertex buffers --------------
+    // This method will create a vertex buffer the first time it is called
+    // with a given vertex format and will later on returns this same
+    // vertex buffer, so it can be used when drawing dynamic primitives
+    // the returned buffer that can be filled and render with DrawPrimitiveVB
+    // (Implemented by Lib)
+    // AddKey is a value that must be < 255 that can be used to have different
+    // dynamic vertex buffer with the same vertex format
+    CKDWORD GetDynamicVertexBuffer(CKDWORD VertexFormat, CKDWORD VertexCount, CKDWORD VertexSize, CKDWORD AddKey);
+
 public:
     CKRasterizerDriver *m_Driver; // Driver that was used to create this context
 
