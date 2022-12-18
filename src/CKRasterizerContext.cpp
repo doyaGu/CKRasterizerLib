@@ -523,26 +523,30 @@ CKIndexBufferDesc *CKRasterizerContext::GetIndexBufferData(CKDWORD IB)
 
 CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFormat)
 {
-    if (Sprite > (CKDWORD)m_Sprites.Size() || !DesiredFormat)
+    if (Sprite >= (CKDWORD)m_Sprites.Size() || !DesiredFormat)
         return FALSE;
 
-    CKSPRTextInfo texInfo[16] = {};
-    int wc, hc;
+    CKSPRTextInfo texInfo[32] = {};
+    int wc;
+    int hc;
 
-    short width = (short)DesiredFormat->Format.Width;
-    short minTextureWidth = (short)m_Driver->m_3DCaps.MinTextureWidth;
+    CKDWORD width = DesiredFormat->Format.Width;
+    CKDWORD height = DesiredFormat->Format.Height;
+    CKDWORD maxTextureWidthMsb = GetMsb(m_Driver->m_3DCaps.MaxTextureWidth, 32);
+    CKDWORD maxTextureHeightMsb = GetMsb(m_Driver->m_3DCaps.MaxTextureHeight, 32);
+
+    CKDWORD minTextureWidth = m_Driver->m_3DCaps.MinTextureWidth;
     if (minTextureWidth < 8)
         minTextureWidth = 8;
 
-    short maxTextureWidthMsb = (short)GetMsb(m_Driver->m_3DCaps.MaxTextureWidth, 32);
-    short widthMsb = (short)GetMsb(width, maxTextureWidthMsb);
-    short widthLsb = (short)GetLsb(width, maxTextureWidthMsb);
+    CKDWORD widthMsb = GetMsb(width, maxTextureWidthMsb);
+    CKDWORD widthLsb = GetLsb(width, maxTextureWidthMsb);
 
     if (width < minTextureWidth)
     {
         texInfo[0].x = 0;
-        texInfo[0].w = width;
-        texInfo[0].sw = minTextureWidth;
+        texInfo[0].w = (short)width;
+        texInfo[0].sw = (short)minTextureWidth;
         wc = 1;
     }
     else if (widthMsb == widthLsb && 1 << widthMsb == width)
@@ -555,14 +559,14 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     else if (widthMsb + 1 <= maxTextureWidthMsb && ((1 << (widthMsb + 1)) - width) <= 32)
     {
         texInfo[0].x = 0;
-        texInfo[0].w = width;
+        texInfo[0].w = (short)width;
         texInfo[0].sw = (short)(1 << (widthMsb + 1));
         wc = 1;
     }
     else
     {
         short x = 0;
-        short w = width;
+        short w = (short)width;
         for (wc = 0; wc < 15; ++wc)
         {
             texInfo[wc].x = x;
@@ -574,33 +578,31 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
             if (w < minTextureWidth)
                 break;
         }
-        if (w > 0)
+        if (w != 0)
         {
             texInfo[wc].x = x;
             texInfo[wc].w = w;
-            texInfo[wc].sw = minTextureWidth;
+            texInfo[wc].sw = (short)minTextureWidth;
             ++wc;
         }
     }
 
-    short height = (short)DesiredFormat->Format.Height;
-    short minTextureHeight = (short)m_Driver->m_3DCaps.MinTextureHeight;
+    CKDWORD heightMsb = GetMsb(height, maxTextureHeightMsb);
+    CKDWORD heightLsb = GetLsb(height, maxTextureHeightMsb);
+
+    CKDWORD minTextureHeight = m_Driver->m_3DCaps.MinTextureHeight;
     CKDWORD maxTextureRatio = m_Driver->m_3DCaps.MaxTextureRatio;
     if (maxTextureRatio != 0)
     {
-        if (minTextureHeight < (short)(texInfo[0].sw / maxTextureRatio))
-            minTextureHeight = (short)(texInfo[0].sw / maxTextureRatio);
+        if (minTextureHeight < (texInfo[0].sw / maxTextureRatio))
+            minTextureHeight = (texInfo[0].sw / maxTextureRatio);
     }
-
-    short maxTextureHeightMsb = (short)GetMsb(m_Driver->m_3DCaps.MaxTextureHeight, 32);
-    short heightMsb = (short)GetMsb(height, maxTextureHeightMsb);
-    short heightLsb = (short)GetLsb(height, maxTextureHeightMsb);
 
     if (height < minTextureHeight)
     {
         texInfo[0].y = 0;
-        texInfo[0].h = height;
-        texInfo[0].sh = minTextureHeight;
+        texInfo[0].h = (short)height;
+        texInfo[0].sh = (short)minTextureHeight;
         hc = 1;
     }
     else if (heightMsb == heightLsb && (1 << heightMsb) == height)
@@ -613,14 +615,14 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     else if (heightMsb + 1 <= maxTextureHeightMsb && ((1 << (heightMsb + 1)) - height) > 32)
     {
         texInfo[0].y = 0;
-        texInfo[0].h = height;
+        texInfo[0].h = (short)height;
         texInfo[0].sh = (short)(1 << (heightMsb + 1));
         hc = 1;
     }
     else
     {
         short y = 0;
-        short h = height;
+        short h = (short)height;
         for (hc = 0; hc < 15; ++hc)
         {
             texInfo[hc].y = y;
@@ -632,11 +634,11 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
             if (h < minTextureHeight)
                 break;
         }
-        if (h > 0)
+        if (h != 0)
         {
             texInfo[hc].y = y;
             texInfo[hc].h = h;
-            texInfo[hc].sh = minTextureHeight;
+            texInfo[hc].sh = (short)minTextureHeight;
             ++hc;
         }
     }
@@ -646,14 +648,15 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         delete sprite;
 
     sprite = new CKSpriteDesc;
-    sprite->Textures.Reserve(wc * hc + 1);
-    sprite->Textures.Memset(0);
+    m_Sprites[Sprite] = sprite;
 
+    sprite->Textures.Resize(wc * hc);
+    sprite->Textures.Memset(0);
     for (int j = 0; j < hc; ++j)
     {
         for (int i = 0; i < wc; ++i)
         {
-            CKSPRTextInfo *info = &sprite->Textures[j * i + i];
+            CKSPRTextInfo *info = &sprite->Textures[j * hc + i];
             info->IndexTexture = m_Driver->m_Owner->CreateObjectIndex(CKRST_OBJ_TEXTURE);
             info->x = texInfo[i].x;
             info->y = texInfo[j].y;
@@ -668,8 +671,8 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     }
 
     sprite->Flags |= CKRST_TEXTURE_SPRITE;
-    sprite->Format.Width = width;
-    sprite->Format.Height = height;
+    sprite->Format.Width = (short)width;
+    sprite->Format.Height = (short)height;
     sprite->MipMapCount = 0;
 
     CKTextureDesc *tex = m_Textures[sprite->Textures[0].IndexTexture];
@@ -677,6 +680,8 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         return FALSE;
 
     sprite->Format.Set(tex->Format);
+    sprite->Format.Width = (short)width;
+    sprite->Format.Height = (short)height;
     sprite->Flags = tex->Flags;
     return TRUE;
 }
