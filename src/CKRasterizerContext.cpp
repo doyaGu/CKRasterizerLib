@@ -526,7 +526,8 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     if (Sprite >= (CKDWORD)m_Sprites.Size() || !DesiredFormat)
         return FALSE;
 
-    CKSPRTextInfo texInfo[32] = {};
+    CKSPRTextInfo wti[16] = {};
+    CKSPRTextInfo hti[16] = {};
     int wc;
     int hc;
 
@@ -544,23 +545,23 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
 
     if (width < minTextureWidth)
     {
-        texInfo[0].x = 0;
-        texInfo[0].w = (short)width;
-        texInfo[0].sw = (short)minTextureWidth;
+        wti[0].x = 0;
+        wti[0].w = (short)width;
+        wti[0].sw = (short)minTextureWidth;
         wc = 1;
     }
     else if (widthMsb == widthLsb && 1 << widthMsb == width)
     {
-        texInfo[0].x = 0;
-        texInfo[0].w = (short)(1 << widthMsb);
-        texInfo[0].sw = (short)(1 << widthMsb);
+        wti[0].x = 0;
+        wti[0].w = (short)(1 << widthMsb);
+        wti[0].sw = (short)(1 << widthMsb);
         wc = 1;
     }
     else if (widthMsb + 1 <= maxTextureWidthMsb && ((1 << (widthMsb + 1)) - width) <= 32)
     {
-        texInfo[0].x = 0;
-        texInfo[0].w = (short)width;
-        texInfo[0].sw = (short)(1 << (widthMsb + 1));
+        wti[0].x = 0;
+        wti[0].w = (short)width;
+        wti[0].sw = (short)(1 << (widthMsb + 1));
         wc = 1;
     }
     else
@@ -569,20 +570,20 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         short w = (short)width;
         for (wc = 0; wc < 15; ++wc)
         {
-            texInfo[wc].x = x;
-            texInfo[wc].w = (short)(1 << widthMsb);
-            texInfo[wc].sw = (short)(1 << widthMsb);
+            wti[wc].x = x;
+            wti[wc].w = (short)(1 << widthMsb);
+            wti[wc].sw = (short)(1 << widthMsb);
             x += (short)(1 << widthMsb);
             w -= (short)(1 << widthMsb);
             widthMsb = (short)GetMsb(w, maxTextureWidthMsb);
-            if (w < minTextureWidth)
+            if (w < (short)minTextureWidth)
                 break;
         }
         if (w != 0)
         {
-            texInfo[wc].x = x;
-            texInfo[wc].w = w;
-            texInfo[wc].sw = (short)minTextureWidth;
+            wti[wc].x = x;
+            wti[wc].w = w;
+            wti[wc].sw = (short)minTextureWidth;
             ++wc;
         }
     }
@@ -592,31 +593,28 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
 
     CKDWORD minTextureHeight = m_Driver->m_3DCaps.MinTextureHeight;
     CKDWORD maxTextureRatio = m_Driver->m_3DCaps.MaxTextureRatio;
-    if (maxTextureRatio != 0)
-    {
-        if (minTextureHeight < (texInfo[0].sw / maxTextureRatio))
-            minTextureHeight = (texInfo[0].sw / maxTextureRatio);
-    }
+    if (maxTextureRatio != 0 && minTextureHeight < (wti[0].sw / maxTextureRatio))
+        minTextureHeight = (wti[0].sw / maxTextureRatio);
 
     if (height < minTextureHeight)
     {
-        texInfo[0].y = 0;
-        texInfo[0].h = (short)height;
-        texInfo[0].sh = (short)minTextureHeight;
+        hti[0].y = 0;
+        hti[0].h = (short)height;
+        hti[0].sh = (short)minTextureHeight;
         hc = 1;
     }
     else if (heightMsb == heightLsb && (1 << heightMsb) == height)
     {
-        texInfo[0].y = 0;
-        texInfo[0].h = (short)(1 << heightMsb);
-        texInfo[0].sh = (short)(1 << heightMsb);
+        hti[0].y = 0;
+        hti[0].h = (short)(1 << heightMsb);
+        hti[0].sh = (short)(1 << heightMsb);
         hc = 1;
     }
     else if (heightMsb + 1 <= maxTextureHeightMsb && ((1 << (heightMsb + 1)) - height) > 32)
     {
-        texInfo[0].y = 0;
-        texInfo[0].h = (short)height;
-        texInfo[0].sh = (short)(1 << (heightMsb + 1));
+        hti[0].y = 0;
+        hti[0].h = (short)height;
+        hti[0].sh = (short)(1 << (heightMsb + 1));
         hc = 1;
     }
     else
@@ -625,20 +623,20 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         short h = (short)height;
         for (hc = 0; hc < 15; ++hc)
         {
-            texInfo[hc].y = y;
-            texInfo[hc].h = (short)(1 << heightMsb);
-            texInfo[hc].sh = (short)(1 << heightMsb);
+            hti[hc].y = y;
+            hti[hc].h = (short)(1 << heightMsb);
+            hti[hc].sh = (short)(1 << heightMsb);
             y += (short)(1 << heightMsb);
             h -= (short)(1 << heightMsb);
             heightMsb = (short)GetMsb(h, maxTextureHeightMsb);
-            if (h < minTextureHeight)
+            if (h < (short)minTextureHeight)
                 break;
         }
         if (h != 0)
         {
-            texInfo[hc].y = y;
-            texInfo[hc].h = h;
-            texInfo[hc].sh = (short)minTextureHeight;
+            hti[hc].y = y;
+            hti[hc].h = h;
+            hti[hc].sh = (short)minTextureHeight;
             ++hc;
         }
     }
@@ -658,12 +656,12 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         {
             CKSPRTextInfo *info = &sprite->Textures[j * hc + i];
             info->IndexTexture = m_Driver->m_Owner->CreateObjectIndex(CKRST_OBJ_TEXTURE);
-            info->x = texInfo[i].x;
-            info->y = texInfo[j].y;
-            info->w = texInfo[i].w;
-            info->h = texInfo[j].h;
-            info->sw = texInfo[i].sw;
-            info->sh = texInfo[j].sh;
+            info->x = wti[i].x;
+            info->y = hti[j].y;
+            info->w = wti[i].w;
+            info->h = hti[j].h;
+            info->sw = wti[i].sw;
+            info->sh = hti[j].sh;
             DesiredFormat->Format.Width = info->sw;
             DesiredFormat->Format.Height = info->sh;
             CreateObject(info->IndexTexture, CKRST_OBJ_TEXTURE, DesiredFormat);
