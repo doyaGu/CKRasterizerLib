@@ -654,7 +654,7 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     {
         for (int i = 0; i < wc; ++i)
         {
-            CKSPRTextInfo *info = &sprite->Textures[j * hc + i];
+            CKSPRTextInfo *info = &sprite->Textures[j * wc + i];
             info->IndexTexture = m_Driver->m_Owner->CreateObjectIndex(CKRST_OBJ_TEXTURE);
             info->x = wti[i].x;
             info->y = hti[j].y;
