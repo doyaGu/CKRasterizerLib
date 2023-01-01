@@ -369,12 +369,9 @@ CKDriverProblems *CKRasterizer::FindDriverProblems(const XString &Vendor, const 
 
 void ConvertAttenuationModelFromDX5(float &_a0, float &_a1, float &_a2, float range)
 {
-    float a0 = 1.0f / (_a0 + _a1 + _a2);
-    float a1 = (_a2 + _a2 + _a1) * (a0 / range) * a0;
-    float a2 = a0 * _a2 * a0 / (range * range) + a1 * a1 / a0;
-    _a0 = a0;
-    _a1 = a1;
-    _a2 = a2;
+    _a0 = 1.0f / (_a0 + _a1 + _a2);
+    _a1 = (_a2 + _a2 + _a1) * (_a0 / range) * _a0;
+    _a2 = _a0 * _a2 * _a0 / (range * range) + _a1 * _a1 / _a0;
 }
 
 CKDWORD CKRSTGetVertexFormat(CKRST_DPFLAGS DpFlags, CKDWORD &VertexSize)
