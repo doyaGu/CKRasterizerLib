@@ -698,7 +698,11 @@ CKDWORD CKRasterizerContext::GetDynamicVertexBuffer(CKDWORD VertexFormat, CKDWOR
     if ((m_Driver->m_3DCaps.CKRasterizerSpecificCaps & CKRST_SPECIFICCAPS_CANDOVERTEXBUFFER) == 0)
         return 0;
 
-    CKDWORD index = (AddKey << 7) | ((VertexFormat & (CKRST_VF_NORMAL | CKRST_VF_RASTERPOS) | ((VertexFormat >> 3) & 0x1F8) >> 2)) + 1;
+    CKDWORD index = VertexFormat & (CKRST_VF_RASTERPOS | CKRST_VF_NORMAL);
+    index |= (VertexFormat & (CKRST_VF_DIFFUSE | CKRST_VF_SPECULAR | CKRST_VF_TEXMASK)) >> 3;
+    index >>= 2;
+    index |= AddKey << 7;
+    index += 1;
 
     CKVertexBufferDesc *vb = m_VertexBuffers[index];
     if (!vb || vb->m_MaxVertexCount < VertexCount)
