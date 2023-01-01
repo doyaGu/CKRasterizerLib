@@ -420,8 +420,7 @@ CKBOOL CKRasterizerContext::TransformVertices(int VertexCount, VxTransformData *
 
 CKDWORD CKRasterizerContext::ComputeBoxVisibility(const VxBbox &box, CKBOOL World, VxRect *extents)
 {
-    CKDWORD flags = (World) ? WORLD_TRANSFORM : VIEW_TRANSFORM;
-    UpdateMatrices(flags);
+    UpdateMatrices(World ? VIEW_TRANSFORM : WORLD_TRANSFORM);
 
     VXCLIP_FLAGS orClipFlags, andClipFlags;
     if (extents)
@@ -444,9 +443,9 @@ CKDWORD CKRasterizerContext::ComputeBoxVisibility(const VxBbox &box, CKBOOL Worl
             VxTransformBox2D(m_TotalMatrix, box, NULL, NULL, orClipFlags, andClipFlags);
     }
 
-    if ((andClipFlags & VXCLIP_ALL) != 0)
+    if (andClipFlags & VXCLIP_ALL)
         return 0;
-    else if ((orClipFlags & VXCLIP_ALL) != 0)
+    else if (orClipFlags & VXCLIP_ALL)
         return VXCLIP_BOXLEFT;
     else
         return VXCLIP_BOXBOTTOM;
