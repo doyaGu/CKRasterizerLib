@@ -352,21 +352,18 @@ CKBOOL CKRasterizerContext::TransformVertices(int VertexCount, VxTransformData *
         return FALSE;
 
     unsigned int offscreen = 0;
-    UpdateMatrices(1);
+    UpdateMatrices(WORLD_TRANSFORM);
 
     VxVector4 *outVertices = (VxVector4 *)Data->OutVertices;
     unsigned int outStride = Data->OutStride;
     if (!outVertices)
     {
-        outVertices = (VxVector4 *)m_Driver->m_Owner->AllocateObjects(2 * VertexCount * sizeof(void *));
-        outStride = 32;
+        outVertices = (VxVector4 *)m_Driver->m_Owner->AllocateObjects(VertexCount * (sizeof(VxVector4) / sizeof(CKDWORD)));
+        outStride = sizeof(VxVector4);
     }
 
-    VxVector *inVertices = (VxVector *)Data->InVertices;
-    unsigned int inStride = Data->InStride;
-
     VxStridedData out(outVertices, outStride);
-    VxStridedData in(inVertices, inStride);
+    VxStridedData in(Data->InVertices, Data->InStride);
     Vx3DMultiplyMatrixVector4Strided(&out, &in, m_TotalMatrix, VertexCount);
 
     if (Data->ClipFlags)
