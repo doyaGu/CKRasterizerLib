@@ -441,11 +441,11 @@ CKDWORD CKRasterizerContext::ComputeBoxVisibility(const VxBbox &box, CKBOOL Worl
     }
 
     if (andClipFlags & VXCLIP_ALL)
-        return 0;
+        return CBV_OFFSCREEN;
     else if (orClipFlags & VXCLIP_ALL)
-        return VXCLIP_BOXLEFT;
+        return CBV_VISIBLE;
     else
-        return VXCLIP_BOXBOTTOM;
+        return CBV_ALLINSIDE;
 }
 
 void CKRasterizerContext::InitDefaultRenderStatesValue()
