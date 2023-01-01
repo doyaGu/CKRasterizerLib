@@ -487,82 +487,84 @@ CKDWORD CKRSTGetVertexSize(CKDWORD VertexFormat)
 
 CKBYTE *CKRSTLoadVertexBuffer(CKBYTE *VBMem, CKDWORD VFormat, CKDWORD VSize, VxDrawPrimitiveData *data)
 {
-    CKBYTE *ptr = (CKBYTE *)data->PositionPtr;
-
+    CKBYTE *positionPtr = (CKBYTE *)data->PositionPtr;
     if (VFormat == CKRST_VF_VERTEX &&
-        VSize == 32 &&
-        data->PositionStride == 32 &&
-        data->NormalStride == 32 &&
-        data->TexCoordStride == 32 &&
-        data->NormalPtr == ptr + 12 &&
-        data->TexCoordPtr == ptr + 24)
+        VSize == sizeof(CKVertex) &&
+        data->PositionStride == sizeof(CKVertex) &&
+        data->NormalStride == sizeof(CKVertex) &&
+        data->TexCoordStride == sizeof(CKVertex) &&
+        data->NormalPtr == positionPtr + sizeof(VxVector) &&
+        data->TexCoordPtr == positionPtr + sizeof(VxVector4) + 2 * sizeof(CKDWORD))
     {
-        memcpy(VBMem, ptr, 32 * data->VertexCount);
-        return &VBMem[32 * data->VertexCount];
+        memcpy(VBMem, positionPtr, data->VertexCount * sizeof(CKVertex));
+        return &VBMem[data->VertexCount * sizeof(CKVertex)];
     }
 
     int offset;
-    if ((VFormat & CKRST_VF_RASTERPOS) != 0)
+    if (VFormat & CKRST_VF_RASTERPOS)
     {
-        VxCopyStructure(data->VertexCount, VBMem, VSize, 16, data->PositionPtr, data->PositionStride);
-        offset = 16;
+        VxCopyStructure(data->VertexCount, VBMem, VSize, sizeof(VxVector4), data->PositionPtr, data->PositionStride);
+        offset = sizeof(VxVector4);
     }
     else
     {
-        VxCopyStructure(data->VertexCount, VBMem, VSize, 12, data->PositionPtr, data->PositionStride);
-        offset = 12;
+        VxCopyStructure(data->VertexCount, VBMem, VSize, sizeof(VxVector), data->PositionPtr, data->PositionStride);
+        offset = sizeof(VxVector);
     }
 
-    if ((VFormat & CKRST_VF_NORMAL) != 0)
+    if (VFormat & CKRST_VF_NORMAL)
     {
         if (data->NormalPtr)
-            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 12, data->NormalPtr, data->NormalStride);
-        offset += 12;
+            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, sizeof(VxVector), data->NormalPtr, data->NormalStride);
+        offset += sizeof(VxVector);
     }
 
-    if ((VFormat & CKRST_VF_DIFFUSE) != 0)
+    if (VFormat & CKRST_VF_DIFFUSE)
     {
         if (data->ColorPtr)
         {
-            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 4, data->ColorPtr, data->ColorStride);
+            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, sizeof(CKDWORD), data->ColorPtr, data->ColorStride);
         }
         else
         {
-            int src = -1;
-            VxFillStructure(data->VertexCount, &VBMem[offset], VSize, 4, &src);
+            CKDWORD src = 0xFFFFFFFF;
+            VxFillStructure(data->VertexCount, &VBMem[offset], VSize, sizeof(CKDWORD), &src);
         }
-        offset += 4;
+        offset += sizeof(CKDWORD);
     }
 
-    if ((VFormat & CKRST_VF_SPECULAR) != 0)
+    if (VFormat & CKRST_VF_SPECULAR)
     {
         if (data->SpecularColorPtr)
         {
-            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 4, data->SpecularColorPtr, data->SpecularColorStride);
+            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, sizeof(CKDWORD), data->SpecularColorPtr, data->SpecularColorStride);
         }
         else
         {
-            int src = 0;
-            VxFillStructure(data->VertexCount, &VBMem[offset], VSize, 4, &src);
+            CKDWORD src = 0;
+            VxFillStructure(data->VertexCount, &VBMem[offset], VSize, sizeof(CKDWORD), &src);
         }
-        offset += 4;
+        offset += sizeof(CKDWORD);
     }
 
-    if ((VFormat & CKRST_VF_TEXMASK) != 0)
+    CKDWORD texCount = CKRST_VF_GETTEXCOUNT(VFormat);
+    if (texCount != 0)
     {
         if (data->TexCoordPtr)
-            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 8, data->TexCoordPtr, data->TexCoordStride);
-        offset += 8;
+            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 2 * sizeof(float), data->TexCoordPtr, data->TexCoordStride);
+        offset += 2 * sizeof(float);
+    }
+    if (texCount > 1)
+    {
+        for (CKDWORD i = 0; i < texCount - 1; ++i)
+        {
+            if (data->TexCoordPtrs[i])
+                VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 2 * sizeof(float), data->TexCoordPtrs[i], data->TexCoordStrides[i]);
+            offset += 2 * sizeof(float);
+        }
     }
 
-    if ((VFormat & CKRST_VF_TEXMASK) > CKRST_VF_TEX1)
-        for (int i = 0; i < CKRST_MAX_STAGES - 1; ++i)
-        {
-            VxCopyStructure(data->VertexCount, &VBMem[offset], VSize, 8, data->TexCoordPtrs[i], data->TexCoordStrides[i]);
-            offset += 8;
-        }
-
-    return &VBMem[VSize * data->VertexCount];
+    return &VBMem[data->VertexCount * VSize];
 }
 
 void CKRSTSetupDPFromVertexBuffer(CKBYTE *VBMem, CKVertexBufferDesc *VB, VxDrawPrimitiveData &DpData)
