@@ -454,8 +454,8 @@ void CKRasterizerContext::InitDefaultRenderStatesValue()
     m_StateCache[VXRENDERSTATE_SRCBLEND].DefaultValue = 2;
     m_StateCache[VXRENDERSTATE_ALPHAFUNC].DefaultValue = 8;
     m_StateCache[VXRENDERSTATE_STENCILFUNC].DefaultValue = 8;
-    m_StateCache[VXRENDERSTATE_STENCILMASK].DefaultValue = -1;
-    m_StateCache[VXRENDERSTATE_STENCILWRITEMASK].DefaultValue = -1;
+    m_StateCache[VXRENDERSTATE_STENCILMASK].DefaultValue = 0xFFFFFFFF;
+    m_StateCache[VXRENDERSTATE_STENCILWRITEMASK].DefaultValue = 0xFFFFFFFF;
     m_StateCache[VXRENDERSTATE_ANTIALIAS].DefaultValue = 0;
     m_StateCache[VXRENDERSTATE_TEXTUREPERSPECTIVE].DefaultValue = 0;
     m_StateCache[VXRENDERSTATE_ZENABLE].DefaultValue = 1;
@@ -483,7 +483,7 @@ void CKRasterizerContext::InitDefaultRenderStatesValue()
     m_StateCache[VXRENDERSTATE_STENCILZFAIL].DefaultValue = 1;
     m_StateCache[VXRENDERSTATE_STENCILPASS].DefaultValue = 1;
     m_StateCache[VXRENDERSTATE_STENCILREF].DefaultValue = 0;
-    m_StateCache[VXRENDERSTATE_TEXTUREFACTOR].DefaultValue = 0xFF000000;
+    m_StateCache[VXRENDERSTATE_TEXTUREFACTOR].DefaultValue = A_MASK;
     m_StateCache[VXRENDERSTATE_WRAP0].DefaultValue = 0;
     m_StateCache[VXRENDERSTATE_WRAP1].DefaultValue = 0;
     m_StateCache[VXRENDERSTATE_WRAP2].DefaultValue = 0;
