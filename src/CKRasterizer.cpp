@@ -379,64 +379,58 @@ void ConvertAttenuationModelFromDX5(float &_a0, float &_a1, float &_a2, float ra
 
 CKDWORD CKRSTGetVertexFormat(CKRST_DPFLAGS DpFlags, CKDWORD &VertexSize)
 {
-    CKDWORD point = 0;
-    CKDWORD stage = ObjTypeIndex(DpFlags >> 9);
+    CKDWORD count = 0;
+    for (CKDWORD flag = CKRST_DP_STAGEFLAGS(DpFlags); flag != 0; flag >>= 1)
+        ++count;
 
-    if ((DpFlags & CKRST_DP_TRANSFORM) != 0)
+    CKDWORD format;
+    if (DpFlags & CKRST_DP_TRANSFORM)
     {
-        VertexSize = 12;
-        if ((DpFlags & CKRST_DP_WEIGHTMASK) != 0)
-        {
-            CKDWORD weight;
-            for (weight = 1; weight <= 5; ++weight)
-                if ((DpFlags & (CKRST_DP_WEIGHTS1 << (weight - 1))) != 0)
-                {
-                    point = 2 * weight + 4;
-                    VertexSize = 4 * weight + 12;
-                    break;
-                }
+        format = CKRST_VF_POSITION;
+        VertexSize = sizeof(VxVector);
 
-            if ((DpFlags & CKRST_DP_MATRIXPAL) != 0)
-                point |= CKRST_VF_NORMAL;
+        if (DpFlags & CKRST_DP_LIGHT)
+        {
+            format |= CKRST_VF_NORMAL;
+            VertexSize += sizeof(VxVector);
         }
         else
         {
-            point = 2;
-        }
+            if (DpFlags & CKRST_DP_DIFFUSE)
+            {
+                format |= CKRST_VF_DIFFUSE;
+                VertexSize += sizeof(CKDWORD);
+            }
 
-        if ((DpFlags & CKRST_VF_POSITION) != 0)
-        {
-            VertexSize += 12 + 8 * stage;
-            point |= CKRST_VF_NORMAL;
-            return point | (stage << 8);
-        }
-
-        if ((DpFlags & CKRST_DP_DIFFUSE) != 0)
-        {
-            VertexSize += 4;
-            point |= CKRST_VF_DIFFUSE;
+            if (DpFlags & CKRST_DP_SPECULAR)
+            {
+                format |= CKRST_VF_SPECULAR;
+                VertexSize += sizeof(CKDWORD);
+            }
         }
     }
     else
     {
-        VertexSize = 16;
-        point = 4;
+        format = CKRST_VF_RASTERPOS;
+        VertexSize = sizeof(VxVector4);
 
-        if ((DpFlags & CKRST_DP_DIFFUSE) != 0)
+        if (DpFlags & CKRST_DP_DIFFUSE)
         {
-            VertexSize = 20;
-            point |= CKRST_VF_DIFFUSE | CKRST_VF_RASTERPOS;
+            format |= CKRST_VF_DIFFUSE;
+            VertexSize += sizeof(CKDWORD);
         }
 
-        if ((DpFlags & CKRST_DP_SPECULAR) != 0)
+        if (DpFlags & CKRST_DP_SPECULAR)
         {
-            VertexSize += 4;
-            point |= CKRST_VF_SPECULAR;
+            format |= CKRST_VF_SPECULAR;
+            VertexSize += sizeof(CKDWORD);
         }
     }
 
-    VertexSize += 8 * stage;
-    return point | (stage << 8);
+    format |= CKRST_VF_TEXCOUNT(count);
+    VertexSize += count * 2 * sizeof(float);
+
+    return format;
 }
 
 CKDWORD CKRSTGetVertexSize(CKDWORD VertexFormat)
