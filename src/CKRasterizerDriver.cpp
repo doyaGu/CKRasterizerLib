@@ -29,6 +29,7 @@ CKRasterizerContext *CKRasterizerDriver::CreateContext()
 CKBOOL CKRasterizerDriver::DestroyContext(CKRasterizerContext *Context)
 {
     m_Contexts.Remove(Context);
+    if (Context) delete Context;
     return TRUE;
 }
 
