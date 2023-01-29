@@ -280,45 +280,44 @@ CKBOOL CKRasterizerContext::LoadSprite(CKDWORD Sprite, const VxImageDescEx &Surf
 {
     if (Sprite >= (CKDWORD)m_Sprites.Size())
         return FALSE;
+
     CKSpriteDesc *sprite = m_Sprites[Sprite];
     if (!sprite)
         return FALSE;
-    if (sprite->Textures.Size() == 0)
+
+    if ((sprite->Textures.Size() & ~0xF) == 0)
         return FALSE;
 
     VxImageDescEx surface = SurfDesc;
-    int nb = SurfDesc.BitsPerPixel / 8;
-    surface.Image = m_Driver->m_Owner->AllocateObjects(sprite->Textures[0].sw * sprite->Textures[0].sh);
-    if (!surface.Image)
+    int bytesPerPixel = SurfDesc.BitsPerPixel / 8;
+
+    CKBYTE *image = m_Driver->m_Owner->AllocateObjects(sprite->Textures[0].sw * sprite->Textures[0].sh);
+    if (!image)
         return FALSE;
+    surface.Image = image;
 
     for (XArray<CKSPRTextInfo>::Iterator it = sprite->Textures.Begin(); it != sprite->Textures.End(); ++it)
     {
-        int wb = it->w * nb;
-        int swb = it->sw * nb;
-
-        XBYTE *pi = &SurfDesc.Image[it->y * SurfDesc.BytesPerLine + it->x * nb];
-        XBYTE *pb = surface.Image;
+        int spriteBytesPerLine = it->w * bytesPerPixel;
+        int textureBytesPerLine = it->sw * bytesPerPixel;
 
         if (it->w != it->sw || it->h != it->sh)
-        {
-            int sz = swb * it->sh;
-            memset(pb, 0, sz);
-            memset(&pb[sz], 0, sz & 3);
-        }
+            memset(image, 0, it->sh * textureBytesPerLine);
 
+        XBYTE *src = &SurfDesc.Image[it->y * SurfDesc.BytesPerLine + it->x * bytesPerPixel];
         for (int h = 0; h < it->h; ++h)
         {
-            memcpy(pb, pi, wb);
-            pb += swb;
-            pi += SurfDesc.BytesPerLine;
+            memcpy(image, src, spriteBytesPerLine);
+            image += textureBytesPerLine;
+            src += SurfDesc.BytesPerLine;
         }
 
-        surface.BytesPerLine = swb;
+        surface.BytesPerLine = textureBytesPerLine;
         surface.Width = it->sw;
         surface.Height = it->sh;
         LoadTexture(it->IndexTexture, surface);
     }
+
     return TRUE;
 }
 
