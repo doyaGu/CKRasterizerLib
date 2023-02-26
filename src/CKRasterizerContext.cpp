@@ -285,7 +285,7 @@ CKBOOL CKRasterizerContext::LoadSprite(CKDWORD Sprite, const VxImageDescEx &Surf
     if (!sprite)
         return FALSE;
 
-    if ((sprite->Textures.Size() & ~0xF) == 0)
+    if (sprite->Textures.Size() == 0)
         return FALSE;
 
     VxImageDescEx surface = SurfDesc;
