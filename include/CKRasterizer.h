@@ -521,15 +521,15 @@ inline void CKRasterizerContext::FlushRenderStateCache()
 {
     for (int i = 0; i < VXRENDERSTATE_MAXSTATE; ++i)
     {
-        m_StateCache[i].Valid = 0;
-        m_StateCache[i].Flag = 0;
+        m_StateCache[i].Valid = FALSE;
+        m_StateCache[i].Flag = FALSE;
         m_StateCache[i].Value = m_StateCache[i].DefaultValue;
     }
 }
 
 inline void CKRasterizerContext::InvalidateStateCache(VXRENDERSTATETYPE State)
 {
-    m_StateCache[State].Valid = 0;
+    m_StateCache[State].Valid = FALSE;
 }
 
 inline CKDWORD CKRasterizerContext::GetRSCacheValue(VXRENDERSTATETYPE State)
@@ -539,7 +539,7 @@ inline CKDWORD CKRasterizerContext::GetRSCacheValue(VXRENDERSTATETYPE State)
 
 inline CKBOOL CKRasterizerContext::InternalSetRenderState(VXRENDERSTATETYPE State, CKDWORD Value)
 {
-    if (m_StateCache[State].Valid)
+    if (m_StateCache[State].Flag)
         return TRUE;
     if (m_StateCache[State].Valid && (m_StateCache[State].Value == Value))
     {
@@ -550,7 +550,7 @@ inline CKBOOL CKRasterizerContext::InternalSetRenderState(VXRENDERSTATETYPE Stat
     {
         m_RenderStateCacheMiss++;
         m_StateCache[State].Value = Value;
-        m_StateCache[State].Valid = 0;
+        m_StateCache[State].Valid = TRUE;
         return FALSE;
     }
 }
