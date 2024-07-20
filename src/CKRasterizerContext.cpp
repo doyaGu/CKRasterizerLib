@@ -367,7 +367,7 @@ CKBOOL CKRasterizerContext::TransformVertices(int VertexCount, VxTransformData *
     unsigned int outStride = Data->OutStride;
     if (!outVertices)
     {
-        outVertices = (VxVector4 *)m_Driver->m_Owner->AllocateObjects(VertexCount * (sizeof(VxVector4) / sizeof(CKDWORD)));
+        outVertices = (VxVector4 *)m_Driver->m_Owner->AllocateObjects((VertexCount * sizeof(VxVector4)) / sizeof(CKDWORD));
         outStride = sizeof(VxVector4);
     }
 
