@@ -285,16 +285,17 @@ CKBOOL CKRasterizerContext::LoadSprite(CKDWORD Sprite, const VxImageDescEx &Surf
     if (!sprite)
         return FALSE;
 
-    if (sprite->Textures.Size() == 0)
+    if (sprite->Textures.IsEmpty())
         return FALSE;
 
-    VxImageDescEx surface = SurfDesc;
+    VxImageDescEx desc = SurfDesc;
     int bytesPerPixel = SurfDesc.BitsPerPixel / 8;
 
-    CKBYTE *image = m_Driver->m_Owner->AllocateObjects(sprite->Textures[0].sw * sprite->Textures[0].sh);
+    // Allocate enough memory to avoid heap corruption
+    CKBYTE *image = m_Driver->m_Owner->AllocateObjects(SurfDesc.Height * SurfDesc.BytesPerLine);
     if (!image)
         return FALSE;
-    surface.Image = image;
+    desc.Image = image;
 
     for (XArray<CKSPRTextInfo>::Iterator it = sprite->Textures.Begin(); it != sprite->Textures.End(); ++it)
     {
@@ -304,7 +305,7 @@ CKBOOL CKRasterizerContext::LoadSprite(CKDWORD Sprite, const VxImageDescEx &Surf
         if (it->w != it->sw || it->h != it->sh)
             memset(image, 0, it->sh * textureBytesPerLine);
 
-        XBYTE *src = &SurfDesc.Image[it->y * SurfDesc.BytesPerLine + it->x * bytesPerPixel];
+        XBYTE *src = &SurfDesc.Image[it->x * bytesPerPixel + it->y * SurfDesc.BytesPerLine];
         for (int h = 0; h < it->h; ++h)
         {
             memcpy(image, src, spriteBytesPerLine);
@@ -312,10 +313,10 @@ CKBOOL CKRasterizerContext::LoadSprite(CKDWORD Sprite, const VxImageDescEx &Surf
             src += SurfDesc.BytesPerLine;
         }
 
-        surface.BytesPerLine = textureBytesPerLine;
-        surface.Width = it->sw;
-        surface.Height = it->sh;
-        LoadTexture(it->IndexTexture, surface);
+        desc.BytesPerLine = textureBytesPerLine;
+        desc.Width = it->sw;
+        desc.Height = it->sh;
+        LoadTexture(it->IndexTexture, desc);
     }
 
     return TRUE;
