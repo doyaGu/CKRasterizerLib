@@ -663,11 +663,10 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         delete sprite;
 
     sprite = new CKSpriteDesc;
-    m_Sprites[Sprite] = sprite;
-
     sprite->Textures.Resize(wc * hc);
     sprite->Textures.Memset(0);
     sprite->Owner = m_Driver->m_Owner;
+    m_Sprites[Sprite] = sprite;
 
     for (int j = 0; j < hc; ++j)
     {
