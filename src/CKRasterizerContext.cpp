@@ -1,47 +1,57 @@
 #include "CKRasterizer.h"
 
-CKDWORD GetMsb(CKDWORD data, CKDWORD index)
+CKDWORD GetMsb(CKDWORD num, CKDWORD max)
 {
 #define OPERAND_SIZE (sizeof(CKDWORD) * 8)
     CKDWORD i = OPERAND_SIZE - 1;
 #ifdef WIN32
     __asm
     {
-        mov eax, data
+        mov eax, num
         bsr eax, eax
         mov i, eax
     }
 #else
-    if (data != 0)
-        while (!(data & (1 << (OPERAND_SIZE - 1))))
+    if (num != 0)
+        while (!(num & (1 << (OPERAND_SIZE - 1))))
         {
-            data <<= 1;
+            num <<= 1;
             --i;
         }
 #endif
-    return (i > index) ? index : i;
+    return (i > max) ? max : i;
 #undef OPERAND_SIZE
 }
 
-CKDWORD GetLsb(CKDWORD data, CKDWORD index)
+CKDWORD GetLsb(CKDWORD num, CKDWORD max)
 {
     CKDWORD i = 0;
 #ifdef WIN32
     __asm
     {
-        mov eax, data
+        mov eax, num
         bsf eax, eax
         mov i, eax
     }
 #else
-    if (data != 0)
-        while (!(data & 1))
+    if (num != 0)
+        while (!(num & 1))
         {
-            data >>= 1;
+            num >>= 1;
             ++i;
         }
 #endif
-    return (i > index) ? index : i;
+    return (i > max) ? max : i;
+}
+
+inline CKDWORD GetPOT(CKDWORD num)
+{
+    CKDWORD msb = GetMsb(num, sizeof(CKDWORD) * 8);
+    CKDWORD lsb = GetLsb(num, sizeof(CKDWORD) * 8);
+    if (msb == lsb)
+        return 1 << msb;
+    else
+        return 1 << (msb + 1);
 }
 
 CKRasterizerContext::CKRasterizerContext()
@@ -533,80 +543,72 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
 
     CKDWORD width = DesiredFormat->Format.Width;
     CKDWORD height = DesiredFormat->Format.Height;
-    CKDWORD maxWidthMsb = GetMsb(m_Driver->m_3DCaps.MaxTextureWidth, 32);
-    CKDWORD maxHeightMsb = GetMsb(m_Driver->m_3DCaps.MaxTextureHeight, 32);
 
-    CKDWORD minTextureWidth = m_Driver->m_3DCaps.MinTextureWidth;
-    if (minTextureWidth < 8)
-        minTextureWidth = 8;
+    short minWidth = (short)m_Driver->m_3DCaps.MinTextureWidth;
+    short minHeight = (short)m_Driver->m_3DCaps.MinTextureHeight;
+
+    const short maxWidth = (short)m_Driver->m_3DCaps.MaxTextureWidth;
+    const short maxHeight = (short)m_Driver->m_3DCaps.MaxTextureHeight;
+
+    short texWidth = GetPOT(width);
+    short texHeight = GetPOT(height);
+
+    if (minWidth < 8)
+        minWidth = 8;
 
     CKSPRTextInfo wti[16] = {};
-    int wc = 0;
+    int wc = 1;
 
-    CKDWORD widthMsb = GetMsb(width, maxWidthMsb);
-    CKDWORD widthLsb = GetLsb(width, maxWidthMsb);
-    short sw = (short)(1 << widthMsb);
-
-    if (width < minTextureWidth)
+    if (width < minWidth)
     {
         wti[0].x = 0;
         wti[0].w = (short)width;
-        wti[0].sw = (short)minTextureWidth;
-        wc = 1;
+        wti[0].sw = minWidth;
     }
-    else if (widthMsb == widthLsb && width == sw)
-    {
-        wti[0].x = 0;
-        wti[0].w = sw;
-        wti[0].sw = sw;
-        wc = 1;
-    }
-    else if (widthMsb + 1 <= maxWidthMsb && (1 << (widthMsb + 1)) - width <= 32)
+    else if (width < maxWidth)
     {
         wti[0].x = 0;
         wti[0].w = (short)width;
-        wti[0].sw = (short)(1 << (widthMsb + 1));
-        wc = 1;
+        wti[0].sw = texWidth;
+    }
+    else if (width == maxWidth)
+    {
+        wti[0].x = 0;
+        wti[0].w = maxWidth;
+        wti[0].sw = maxWidth;
     }
     else
     {
-        short x = 0;
-        short w = (short)width;
-        for (CKSPRTextInfo *pti = &wti[0]; w >= minTextureWidth && wc < 15; ++pti)
+        wc = 0;
+        CKDWORD x = 0;
+        CKDWORD w = width;
+        for (CKSPRTextInfo *pti = &wti[0]; w >= minWidth && wc < 16; ++pti)
         {
-            sw = (short)(1 << widthMsb);
+            pti->x = (short)x;
+            pti->w = maxWidth;
+            pti->sw = maxWidth;
 
-            pti->x = x;
-            pti->w = sw;
-            pti->sw = sw;
-
-            x += sw;
-            w -= sw;
-            widthMsb = GetMsb(w, maxWidthMsb);
+            x += maxWidth;
+            w -= maxWidth;
             ++wc;
         }
-        if (w != 0)
+
+        if (w > 0)
         {
-            wti[wc].x = x;
+            wti[wc].x = (short)x;
             wti[wc].w = w;
-            wti[wc].sw = (short)minTextureWidth;
+            wti[wc].sw = minWidth;
             ++wc;
         }
     }
 
     CKSPRTextInfo hti[16] = {};
-    int hc = 0;
-
-    CKDWORD heightMsb = GetMsb(height, maxHeightMsb);
-    CKDWORD heightLsb = GetLsb(height, maxHeightMsb);
-    short sh = (short)(1 << heightMsb);
+    int hc = 1;
 
     CKDWORD maxRatio = m_Driver->m_3DCaps.MaxTextureRatio;
-    CKDWORD minHeight = m_Driver->m_3DCaps.MinTextureHeight;
-
     if (maxRatio != 0)
     {
-        CKDWORD h = (wti[0].sw / maxRatio);
+        short h = (short)(wti[0].sw / maxRatio);
         if (minHeight < h)
             minHeight = h;
     }
@@ -615,46 +617,42 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     {
         hti[0].y = 0;
         hti[0].h = (short)height;
-        hti[0].sh = (short)minHeight;
-        hc = 1;
+        hti[0].sh = minHeight;
     }
-    else if (heightMsb == heightLsb && height == sh)
-    {
-        hti[0].y = 0;
-        hti[0].h = sh;
-        hti[0].sh = sh;
-        hc = 1;
-    }
-    else if (heightMsb + 1 <= maxHeightMsb && (1 << (heightMsb + 1)) - height <= 32)
+    else if (height < maxHeight)
     {
         hti[0].y = 0;
         hti[0].h = (short)height;
-        hti[0].sh = (short)(1 << (heightMsb + 1));
-        hc = 1;
+        hti[0].sh = texHeight;
+    }
+    else if (height == maxHeight)
+    {
+        hti[0].y = 0;
+        hti[0].h = maxHeight;
+        hti[0].sh = maxHeight;
     }
     else
     {
-        short y = 0;
-        short h = (short)height;
-        for (CKSPRTextInfo *pti = &hti[0]; h >= minHeight && hc < 15; ++pti)
+        hc = 0;
+        CKDWORD y = 0;
+        CKDWORD h = height;
+        for (CKSPRTextInfo *pti = &hti[0]; h >= minHeight && wc < 16; ++pti)
         {
-            sh = (short)(1 << heightMsb);
+            pti->x = (short)y;
+            pti->w = maxHeight;
+            pti->sw = maxHeight;
 
-            pti->y = y;
-            pti->h = sh;
-            pti->sh = sh;
-
-            y += sh;
-            h -= sh;
-            heightMsb = GetMsb(h, maxHeightMsb);
+            y += maxHeight;
+            h -= maxHeight;
             ++hc;
         }
-        if (h != 0)
+
+        if (h > 0)
         {
-            hti[hc].y = y;
-            hti[hc].h = h;
-            hti[hc].sh = (short)minHeight;
-            ++hc;
+            wti[wc].y = (short)y;
+            wti[wc].h = h;
+            wti[wc].sw = minHeight;
+            ++wc;
         }
     }
 
