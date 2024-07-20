@@ -147,40 +147,49 @@ CKBOOL CKRasterizerContext::SetTransformMatrix(VXMATRIX_TYPE Type, const VxMatri
 
 CKBOOL CKRasterizerContext::DeleteObject(CKDWORD ObjIndex, CKRST_OBJECTTYPE Type)
 {
-    if (ObjIndex >= (CKDWORD)m_Textures.Size())
-        return FALSE;
-
     switch (Type)
     {
     case CKRST_OBJ_TEXTURE:
-        if (m_Textures[ObjIndex])
+        if (ObjIndex < m_Textures.Size())
+        {
             delete m_Textures[ObjIndex];
-        m_Textures[ObjIndex] = NULL;
+            m_Textures[ObjIndex] = NULL;
+        }
         break;
     case CKRST_OBJ_SPRITE:
-        if (m_Sprites[ObjIndex])
+        if (ObjIndex < m_Sprites.Size())
+        {
             delete m_Sprites[ObjIndex];
-        m_Sprites[ObjIndex] = NULL;
+            m_Sprites[ObjIndex] = NULL;
+        }
         break;
     case CKRST_OBJ_VERTEXBUFFER:
-        if (m_VertexBuffers[ObjIndex])
+        if (ObjIndex < m_VertexBuffers.Size())
+        {
             delete m_VertexBuffers[ObjIndex];
-        m_VertexBuffers[ObjIndex] = NULL;
+            m_VertexBuffers[ObjIndex] = NULL;
+        }
         break;
     case CKRST_OBJ_INDEXBUFFER:
-        if (m_IndexBuffers[ObjIndex])
+        if (ObjIndex < m_IndexBuffers.Size())
+        {
             delete m_IndexBuffers[ObjIndex];
-        m_IndexBuffers[ObjIndex] = NULL;
+            m_IndexBuffers[ObjIndex] = NULL;
+        }
         break;
     case CKRST_OBJ_VERTEXSHADER:
-        if (m_VertexShaders[ObjIndex])
+        if (ObjIndex < m_VertexShaders.Size())
+        {
             delete m_VertexShaders[ObjIndex];
-        m_VertexShaders[ObjIndex] = NULL;
+            m_VertexShaders[ObjIndex] = NULL;
+        }
         break;
     case CKRST_OBJ_PIXELSHADER:
-        if (m_PixelShaders[ObjIndex])
+        if (ObjIndex < m_PixelShaders.Size())
+        {
             delete m_PixelShaders[ObjIndex];
-        m_PixelShaders[ObjIndex] = NULL;
+            m_PixelShaders[ObjIndex] = NULL;
+        }
         break;
     default:
         return FALSE;
