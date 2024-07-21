@@ -598,25 +598,4 @@ inline int GetFirstBitpos(CKDWORD data)
 #endif
 }
 
-inline int ObjTypeIndex(unsigned int objType)
-{
-#ifdef WIN32
-    __asm
-    {
-        mov eax, objType
-        bsf eax, eax
-    }
-#else
-    int index = 0;
-    if (objType == 0)
-        return 0;
-    while (!(objType & 1))
-    {
-        objType >>= 1;
-        ++index;
-    }
-    return index;
-#endif
-}
-
 #endif // CKRASTERIZER_H
