@@ -522,7 +522,7 @@ inline void CKRasterizerContext::FlushRenderStateCache()
     for (int i = 0; i < VXRENDERSTATE_MAXSTATE; ++i)
     {
         m_StateCache[i].Valid = FALSE;
-        m_StateCache[i].Flag = FALSE;
+        m_StateCache[i].Flags = 0;
         m_StateCache[i].Value = m_StateCache[i].DefaultValue;
     }
 }
@@ -539,7 +539,7 @@ inline CKDWORD CKRasterizerContext::GetRSCacheValue(VXRENDERSTATETYPE State)
 
 inline CKBOOL CKRasterizerContext::InternalSetRenderState(VXRENDERSTATETYPE State, CKDWORD Value)
 {
-    if (m_StateCache[State].Flag)
+    if (m_StateCache[State].Flags != 0)
         return TRUE;
     if (m_StateCache[State].Valid && (m_StateCache[State].Value == Value))
     {
