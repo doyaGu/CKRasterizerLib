@@ -44,7 +44,7 @@ CKDWORD GetLsb(CKDWORD num, CKDWORD max)
     return (i > max) ? max : i;
 }
 
-inline CKDWORD GetPOT(CKDWORD num)
+inline CKDWORD GetPow2(CKDWORD num)
 {
     CKDWORD msb = GetMsb(num, sizeof(CKDWORD) * 8);
     CKDWORD lsb = GetLsb(num, sizeof(CKDWORD) * 8);
@@ -551,8 +551,8 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     const short maxWidth = (short)m_Driver->m_3DCaps.MaxTextureWidth;
     const short maxHeight = (short)m_Driver->m_3DCaps.MaxTextureHeight;
 
-    short texWidth = GetPOT(width);
-    short texHeight = GetPOT(height);
+    short texWidth = GetPow2(width);
+    short texHeight = GetPow2(height);
 
     if (minWidth < 8)
         minWidth = 8;
@@ -694,10 +694,10 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
     if (!tex)
         return FALSE;
 
+    sprite->Flags = tex->Flags;
     sprite->Format = tex->Format;
     sprite->Format.Width = width;
     sprite->Format.Height = height;
-    sprite->Flags = tex->Flags;
     return TRUE;
 }
 
