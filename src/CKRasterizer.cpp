@@ -493,6 +493,10 @@ CKDWORD CKRSTGetVertexSize(CKDWORD VertexFormat)
     case CKRST_VF_POSITION5W:
         vertexSize = 32;
         break;
+    default:
+        // Default to the simplest vertex size to avoid crashes
+        vertexSize = 12; // Size of basic position vector
+        break;
     }
 
     if ((VertexFormat & CKRST_VF_NORMAL) != 0)
