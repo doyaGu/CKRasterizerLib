@@ -314,7 +314,7 @@ CKBOOL CKRasterizerContext::LoadSprite(CKDWORD Sprite, const VxImageDescEx &Surf
     VxImageDescEx desc = SurfDesc;
     int bytesPerPixel = SurfDesc.BitsPerPixel / 8;
 
-    CKBYTE *image = m_Driver->m_Owner->AllocateObjects((bytesPerPixel * sprite->Textures[0].sw * sprite->Textures[0].sh) / sizeof(CKDWORD));
+    CKBYTE *image = m_Driver->m_Owner->AllocateObjects((bytesPerPixel * sprite->Textures[0].sw * sprite->Textures[0].sh + sizeof(CKDWORD) - 1) / sizeof(CKDWORD));
     if (!image)
         return FALSE;
     desc.Image = image;
