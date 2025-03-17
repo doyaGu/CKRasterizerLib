@@ -597,7 +597,7 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         if (w > 0)
         {
             wti[wc].x = (short)x;
-            wti[wc].w = w;
+            wti[wc].w = (short)w;
             wti[wc].sw = minWidth;
             ++wc;
         }
@@ -637,11 +637,11 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
         hc = 0;
         CKDWORD y = 0;
         CKDWORD h = height;
-        for (CKSPRTextInfo *pti = &hti[0]; h >= minHeight && wc < 16; ++pti)
+        for (CKSPRTextInfo *pti = &hti[0]; h >= minHeight && hc < 16; ++pti)
         {
-            pti->x = (short)y;
-            pti->w = maxHeight;
-            pti->sw = maxHeight;
+            pti->y = (short)y;
+            pti->h = maxHeight;
+            pti->sh = maxHeight;
 
             y += maxHeight;
             h -= maxHeight;
@@ -650,10 +650,10 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
 
         if (h > 0)
         {
-            wti[wc].y = (short)y;
-            wti[wc].h = h;
-            wti[wc].sw = minHeight;
-            ++wc;
+            hti[hc].y = (short)y;
+            hti[hc].h = (short)h;
+            hti[hc].sh = minHeight;
+            ++hc;
         }
     }
 
