@@ -386,7 +386,8 @@ CKDriverProblems *CKRasterizer::FindDriverProblems(const XString &Vendor, const 
                 sscanf(it->m_Version.CStr(), "%d.%d.%d", &major1, &minor1, &patch1);
                 int major2, minor2, patch2;
                 sscanf(Version.CStr(), "%d.%d.%d", &major2, &minor2, &patch2);
-                if (major1 > major2 || major1 == major2 && (minor1 > minor2 || minor1 == minor2 && patch1 >= patch2))
+                // If driver version is less than problematic driver's maximum version
+                if (major2 > major1 || (major2 == major1 && (minor2 > minor1 || (minor2 == minor1 && patch2 > patch1))))
                     continue;
             }
         }
