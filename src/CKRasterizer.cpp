@@ -95,6 +95,10 @@ CKRasterizer::~CKRasterizer()
             delete m_Drivers[i];
     }
     m_Drivers.Clear();
+
+    // Clean up other resources
+    m_OtherRasterizers.Clear();
+    m_ProblematicDrivers.Clear();
 }
 
 CKBOOL CKRasterizer::Start(WIN_HANDLE AppWnd)
