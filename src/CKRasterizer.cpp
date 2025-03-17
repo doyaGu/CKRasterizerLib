@@ -87,6 +87,14 @@ CKRasterizer::CKRasterizer()
 CKRasterizer::~CKRasterizer()
 {
     m_FullscreenContext = NULL;
+
+    // Clean up drivers
+    for (int i = 0; i < m_Drivers.Size(); ++i)
+    {
+        if (m_Drivers[i])
+            delete m_Drivers[i];
+    }
+    m_Drivers.Clear();
 }
 
 CKBOOL CKRasterizer::Start(WIN_HANDLE AppWnd)
