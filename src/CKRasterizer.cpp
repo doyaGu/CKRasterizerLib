@@ -415,9 +415,12 @@ void ConvertAttenuationModelFromDX5(float &_a0, float &_a1, float &_a2, float ra
 
 CKDWORD CKRSTGetVertexFormat(CKRST_DPFLAGS DpFlags, CKDWORD &VertexSize)
 {
+    CKDWORD texStages = CKRST_DP_STAGEFLAGS(DpFlags);
     CKDWORD count = 0;
-    for (CKDWORD flag = CKRST_DP_STAGEFLAGS(DpFlags); flag != 0; flag >>= 1)
-        ++count;
+    while (texStages) {
+        if (texStages & 1) count++;
+        texStages >>= 1;
+    }
 
     CKDWORD format;
     if (DpFlags & CKRST_DP_TRANSFORM)
