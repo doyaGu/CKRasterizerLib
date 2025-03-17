@@ -46,12 +46,16 @@ CKDWORD GetLsb(CKDWORD num, CKDWORD max)
 
 inline CKDWORD GetPow2(CKDWORD num)
 {
+    // Special case for 0
+    if (num == 0) return 1;
+
+    // Check if already a power of 2
+    if ((num & (num - 1)) == 0)
+        return num;
+
+    // Find MSB and return next power of 2
     CKDWORD msb = GetMsb(num, sizeof(CKDWORD) * 8);
-    CKDWORD lsb = GetLsb(num, sizeof(CKDWORD) * 8);
-    if (msb == lsb)
-        return 1 << msb;
-    else
-        return 1 << (msb + 1);
+    return 1 << (msb + 1);
 }
 
 CKRasterizerContext::CKRasterizerContext()
