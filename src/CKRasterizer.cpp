@@ -148,7 +148,7 @@ CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers
 
 CKBOOL CKRasterizer::ReleaseObjectIndex(CKDWORD ObjectIndex, CKRST_OBJECTTYPE Type, CKBOOL WarnOthers)
 {
-    if (ObjectIndex > (CKDWORD)m_ObjectsIndex.Size())
+    if (ObjectIndex >= (CKDWORD)m_ObjectsIndex.Size())
         return FALSE;
     if ((m_ObjectsIndex[ObjectIndex] & Type) == 0)
         return FALSE;
