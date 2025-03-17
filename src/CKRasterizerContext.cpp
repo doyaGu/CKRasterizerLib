@@ -390,6 +390,9 @@ CKBOOL CKRasterizerContext::TransformVertices(int VertexCount, VxTransformData *
     VxStridedData in(Data->InVertices, Data->InStride);
     Vx3DMultiplyMatrixVector4Strided(&out, &in, m_TotalMatrix, VertexCount);
 
+    // Store original pointer to reset later
+    VxVector4 *originalOutVertices = outVertices;
+
     if (Data->ClipFlags)
     {
         offscreen = 0xFFFFFFFF;
@@ -413,25 +416,46 @@ CKBOOL CKRasterizerContext::TransformVertices(int VertexCount, VxTransformData *
 
             offscreen &= clipFlag;
             Data->ClipFlags[v] = clipFlag;
-            outVertices += outStride;
+
+            // Properly advance pointer by stride bytes
+            outVertices = (VxVector4*)((CKBYTE*)outVertices + outStride);
         }
     }
 
     VxVector4 *screenVertices = (VxVector4 *)Data->ScreenVertices;
     if (screenVertices)
     {
+        // Reset to original position before second loop
+        outVertices = originalOutVertices;
+
         float halfWidth = m_ViewportData.ViewWidth * 0.5f;
         float halfHeight = m_ViewportData.ViewHeight * 0.5f;
         float centerX = m_ViewportData.ViewX + halfWidth;
         float centerY = m_ViewportData.ViewY + halfHeight;
+
         for (int v = 0; v < VertexCount; ++v)
         {
-            float w = 1.0f / outVertices->w;
-            screenVertices->w = w;
-            screenVertices->z = w * outVertices->z;
-            screenVertices->y = centerY - outVertices->y * w * halfHeight;
-            screenVertices->x = centerX + outVertices->x * w * halfWidth;
-            screenVertices += Data->ScreenStride;
+            // Check for division by zero
+            if (fabs(outVertices->w) > EPSILON)
+            {
+                float w = 1.0f / outVertices->w;
+                screenVertices->w = w;
+                screenVertices->z = w * outVertices->z;
+                screenVertices->y = centerY - outVertices->y * w * halfHeight;
+                screenVertices->x = centerX + outVertices->x * w * halfWidth;
+            }
+            else
+            {
+                // Handle the case where w is zero or very small
+                screenVertices->w = 0.0f;
+                screenVertices->z = 0.0f;
+                screenVertices->y = centerY;
+                screenVertices->x = centerX;
+            }
+
+            // Properly advance pointers by stride bytes
+            outVertices = (VxVector4*)((CKBYTE*)outVertices + outStride);
+            screenVertices = (VxVector4*)((CKBYTE*)screenVertices + Data->ScreenStride);
         }
     }
 
