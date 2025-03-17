@@ -43,11 +43,14 @@ void CKNULLRasterizerClose(CKRasterizer *rst)
 inline int ObjTypeIndex(unsigned int objType)
 {
 #ifdef WIN32
+    int result;
     __asm
     {
         mov eax, objType
         bsf eax, eax
+        mov result, eax
     }
+    return result;
 #else
     int index = 0;
     if (objType == 0)
