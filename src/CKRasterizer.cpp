@@ -114,10 +114,12 @@ CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers
         if ((Type & m_ObjectsIndex[i]) == 0)
             break;
 
-    if (i > objectsIndexCount)
+    if (i >= objectsIndexCount)
     {
+        int oldSize = objectsIndexCount;
         m_ObjectsIndex.Resize(2 * i);
-        memset(&m_ObjectsIndex[i], 0, i);
+        // Initialize only the new elements
+        memset(&m_ObjectsIndex[oldSize], 0, (m_ObjectsIndex.Size() - oldSize));
 
         int driverCount = GetDriverCount();
         for (int d = 0; d < driverCount; d++)
