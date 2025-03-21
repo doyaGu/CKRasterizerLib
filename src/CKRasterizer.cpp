@@ -1,7 +1,5 @@
 #include "CKRasterizer.h"
 
-#include <stdio.h>
-
 #ifdef CKNULLRASTERIZER_DLL
 
 CKRasterizer *CKNULLRasterizerStart(WIN_HANDLE AppWnd);
