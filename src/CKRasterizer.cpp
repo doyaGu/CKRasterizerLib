@@ -119,7 +119,7 @@ CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers
     if (i >= objectsIndexCount)
     {
         int oldSize = objectsIndexCount;
-        m_ObjectsIndex.Resize(2 * i);
+        m_ObjectsIndex.Resize(2 * i + 1);
         // Initialize only the new elements
         memset(&m_ObjectsIndex[oldSize], 0, (m_ObjectsIndex.Size() - oldSize));
 
@@ -129,8 +129,7 @@ CKDWORD CKRasterizer::CreateObjectIndex(CKRST_OBJECTTYPE Type, CKBOOL WarnOthers
             CKRasterizerDriver *driver = GetDriver(d);
             if (driver)
             {
-                for (XArray<CKRasterizerContext *>::Iterator it = driver->m_Contexts.Begin();
-                     it != driver->m_Contexts.End(); ++it)
+                for (XArray<CKRasterizerContext *>::Iterator it = driver->m_Contexts.Begin(); it != driver->m_Contexts.End(); ++it)
                     (*it)->UpdateObjectArrays(this);
             }
         }
