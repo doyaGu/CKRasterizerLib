@@ -743,32 +743,68 @@ void CKRasterizerContext::UpdateMatrices(CKDWORD Flags)
 
 CKDWORD CKRasterizerContext::GetDynamicVertexBuffer(CKDWORD VertexFormat, CKDWORD VertexCount, CKDWORD VertexSize, CKDWORD AddKey)
 {
-    if ((m_Driver->m_3DCaps.CKRasterizerSpecificCaps & CKRST_SPECIFICCAPS_CANDOVERTEXBUFFER) == 0)
+    if (VertexFormat == 0 || VertexCount == 0 || VertexSize == 0)
         return 0;
 
-    CKDWORD index = VertexFormat & (CKRST_VF_RASTERPOS | CKRST_VF_NORMAL);
+    // Check if hardware supports vertex buffers
+    if (!(m_Driver->m_3DCaps.CKRasterizerSpecificCaps & CKRST_SPECIFICCAPS_CANDOVERTEXBUFFER))
+        return 0;
+
+    // Generate a unique index based on vertex format properties
+    // This ensures different types of vertex data get different buffers
+    CKDWORD index = 0;
+    // Extract position and normal flags
+    index = VertexFormat & (CKRST_VF_POSITIONMASK | CKRST_VF_NORMAL);
+    // Incorporate diffuse, specular and texture coord flags with proper shifting
     index |= (VertexFormat & (CKRST_VF_DIFFUSE | CKRST_VF_SPECULAR | CKRST_VF_TEXMASK)) >> 3;
+    // Shift down to make room for AddKey
     index >>= 2;
+    // Incorporate AddKey into high bits
     index |= AddKey << 7;
+    // Ensure index is not zero
     index += 1;
 
-    CKVertexBufferDesc *vb = m_VertexBuffers[index];
-    if (!vb || vb->m_MaxVertexCount < VertexCount)
+    // Sanity check to make sure index is within valid range
+    if (index >= (CKDWORD)m_VertexBuffers.Size())
     {
+        // If index is out of bounds, fall back to a default index
+        index = 1; // Just use the first VB slot as fallback
+    }
+
+    CKVertexBufferDesc *vb = m_VertexBuffers[index];
+    if (!vb || vb->m_MaxVertexCount < VertexCount || vb->m_VertexFormat != VertexFormat)
+    {
+        // Clean up existing vertex buffer if it exists
         if (vb)
         {
             delete vb;
             m_VertexBuffers[index] = NULL;
         }
 
+        // Initialize new vertex buffer descriptor
         CKVertexBufferDesc nvb;
         nvb.m_Flags = CKRST_VB_WRITEONLY | CKRST_VB_DYNAMIC;
-        nvb.m_VertexFormat = VertexFormat;
-        nvb.m_VertexSize = VertexSize;
-        nvb.m_MaxVertexCount = (VertexCount + 100 > DEFAULT_VB_SIZE) ? VertexCount + 100 : DEFAULT_VB_SIZE;
+
+        // If AddKey is non-zero, this buffer might be shared across different types of geometry
         if (AddKey != 0)
             nvb.m_Flags |= CKRST_VB_SHARED;
-        CreateObject(index, CKRST_OBJ_VERTEXBUFFER, &nvb);
+
+        nvb.m_VertexFormat = VertexFormat;
+        nvb.m_VertexSize = VertexSize;
+
+        // Allocate more than requested to avoid frequent resizing
+        // Use at least DEFAULT_VB_SIZE for efficiency
+        nvb.m_MaxVertexCount = VertexCount + 100;
+        if (nvb.m_MaxVertexCount < DEFAULT_VB_SIZE)
+            nvb.m_MaxVertexCount = DEFAULT_VB_SIZE;
+
+        // Create the actual vertex buffer object
+        if (!CreateObject(index, CKRST_OBJ_VERTEXBUFFER, &nvb))
+            return 0;
+
+        // Verify the vertex buffer was created successfully
+        if (!m_VertexBuffers[index])
+            return 0;
     }
 
     return index;
