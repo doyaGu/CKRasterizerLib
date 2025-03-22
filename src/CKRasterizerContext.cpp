@@ -213,7 +213,7 @@ CKBOOL CKRasterizerContext::DeleteObject(CKDWORD ObjIndex, CKRST_OBJECTTYPE Type
 
 CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
 {
-    if ((TypeMask & CKRST_OBJ_TEXTURE) != 0)
+    if (TypeMask & CKRST_OBJ_TEXTURE)
         for (XArray<CKTextureDesc *>::Iterator it = m_Textures.Begin(); it != m_Textures.End(); ++it)
         {
             if (*it)
@@ -221,7 +221,7 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
             *it = NULL;
         }
 
-    if ((TypeMask & CKRST_OBJ_SPRITE) != 0)
+    if (TypeMask & CKRST_OBJ_SPRITE)
         for (XArray<CKSpriteDesc *>::Iterator it = m_Sprites.Begin(); it != m_Sprites.End(); ++it)
         {
             if (*it)
@@ -229,7 +229,7 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
             *it = NULL;
         }
 
-    if ((TypeMask & CKRST_OBJ_VERTEXBUFFER) != 0)
+    if (TypeMask & CKRST_OBJ_VERTEXBUFFER)
         for (XArray<CKVertexBufferDesc *>::Iterator it = m_VertexBuffers.Begin(); it != m_VertexBuffers.End(); ++it)
         {
             if (*it)
@@ -237,7 +237,7 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
             *it = NULL;
         }
 
-    if ((TypeMask & CKRST_OBJ_INDEXBUFFER) != 0)
+    if (TypeMask & CKRST_OBJ_INDEXBUFFER)
         for (XArray<CKIndexBufferDesc *>::Iterator it = m_IndexBuffers.Begin(); it != m_IndexBuffers.End(); ++it)
         {
             if (*it)
@@ -245,7 +245,7 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
             *it = NULL;
         }
 
-    if ((TypeMask & CKRST_OBJ_VERTEXSHADER) != 0)
+    if (TypeMask & CKRST_OBJ_VERTEXSHADER)
         for (XArray<CKVertexShaderDesc *>::Iterator it = m_VertexShaders.Begin(); it != m_VertexShaders.End(); ++it)
         {
             if (*it)
@@ -253,7 +253,7 @@ CKBOOL CKRasterizerContext::FlushObjects(CKDWORD TypeMask)
             *it = NULL;
         }
 
-    if ((TypeMask & CKRST_OBJ_PIXELSHADER) != 0)
+    if (TypeMask & CKRST_OBJ_PIXELSHADER)
         for (XArray<CKPixelShaderDesc *>::Iterator it = m_PixelShaders.Begin(); it != m_PixelShaders.End(); ++it)
         {
             if (*it)
@@ -294,7 +294,7 @@ CKTextureDesc *CKRasterizerContext::GetTextureData(CKDWORD Texture)
     CKTextureDesc *data = m_Textures[Texture];
     if (!data)
         return NULL;
-    if ((data->Flags & CKRST_TEXTURE_VALID) == 0)
+    if (!(data->Flags & CKRST_TEXTURE_VALID))
         return NULL;
     return data;
 }
@@ -353,7 +353,7 @@ CKSpriteDesc *CKRasterizerContext::GetSpriteData(CKDWORD Sprite)
     CKSpriteDesc *data = m_Sprites[Sprite];
     if (!data)
         return NULL;
-    if ((data->Flags & CKRST_TEXTURE_VALID) == 0)
+    if (!(data->Flags & CKRST_TEXTURE_VALID))
         return NULL;
     return data;
 }
@@ -365,7 +365,7 @@ CKVertexBufferDesc *CKRasterizerContext::GetVertexBufferData(CKDWORD VB)
     CKVertexBufferDesc *data = m_VertexBuffers[VB];
     if (!data)
         return NULL;
-    if ((data->m_Flags & CKRST_VB_VALID) == 0)
+    if (!(data->m_Flags & CKRST_VB_VALID))
         return NULL;
     return data;
 }
@@ -560,7 +560,7 @@ CKIndexBufferDesc *CKRasterizerContext::GetIndexBufferData(CKDWORD IB)
     CKIndexBufferDesc *data = m_IndexBuffers[IB];
     if (!data)
         return NULL;
-    if ((data->m_Flags & CKRST_VB_VALID) == 0)
+    if (!(data->m_Flags & CKRST_VB_VALID))
         return NULL;
     return data;
 }
@@ -731,11 +731,11 @@ CKBOOL CKRasterizerContext::CreateSprite(CKDWORD Sprite, CKSpriteDesc *DesiredFo
 
 void CKRasterizerContext::UpdateMatrices(CKDWORD Flags)
 {
-    if ((Flags & m_MatrixUptodate) == 0)
+    if (!(Flags & m_MatrixUptodate))
     {
-        if ((Flags & WORLD_TRANSFORM) != 0)
+        if (Flags & WORLD_TRANSFORM)
             Vx3DMultiplyMatrix4(m_TotalMatrix, m_ProjectionMatrix, m_ModelViewMatrix);
-        if ((Flags & VIEW_TRANSFORM) != 0)
+        if (Flags & VIEW_TRANSFORM)
             Vx3DMultiplyMatrix4(m_ViewProjMatrix, m_ProjectionMatrix, m_ViewMatrix);
         m_MatrixUptodate |= Flags;
     }
