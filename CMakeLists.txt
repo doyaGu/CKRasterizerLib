@@ -49,23 +49,24 @@ set(VIRTOOLS_SDK_FETCH_FROM_GIT_PATH "${VIRTOOLS_SDK_FETCH_FROM_GIT_PATH}" CACHE
 
 if (NOT VIRTOOLS_SDK_PATH)
     if (NOT VIRTOOLS_SDK_FETCH_FROM_GIT)
-        message(FATAL_ERROR "Virtools SDK location was not specified. Please set VIRTOOLS_SDK_PATH or set VIRTOOLS_SDK_FETCH_FROM_GIT to on to fetch from git.")
+        message(FATAL_ERROR "Virtools SDK location was not specified. Please set VIRTOOLS_SDK_PATH or set VIRTOOLS_SDK_FETCH_FROM_GIT to ON to fetch from Git.")
     else ()
         include(FetchContent)
         set(FETCHCONTENT_BASE_DIR_SAVE ${FETCHCONTENT_BASE_DIR})
         if (VIRTOOLS_SDK_FETCH_FROM_GIT_PATH)
             get_filename_component(FETCHCONTENT_BASE_DIR "${VIRTOOLS_SDK_FETCH_FROM_GIT_PATH}" REALPATH BASE_DIR "${CMAKE_SOURCE_DIR}")
         endif ()
+
         FetchContent_Declare(
-                Virtools_SDK
-                GIT_REPOSITORY https://github.com/doyaGu/Virtools-SDK-2.1.git
-                GIT_TAG main
+            Virtools_SDK
+            GIT_REPOSITORY https://github.com/doyaGu/Virtools-SDK-2.1.git
+            GIT_TAG main
         )
-        if (NOT Virtools_SDK)
-            message("Downloading Virtools SDK")
-            FetchContent_Populate(Virtools_SDK)
-            set(VIRTOOLS_SDK_PATH "${virtools_sdk_SOURCE_DIR}" CACHE PATH "Path to the Virtools SDK" FORCE)
-        endif ()
+
+        message("Fetching Virtools SDK...")
+        FetchContent_MakeAvailable(Virtools_SDK)
+
+        set(VIRTOOLS_SDK_PATH "${virtools_sdk_SOURCE_DIR}" CACHE PATH "Path to the Virtools SDK" FORCE)
         set(FETCHCONTENT_BASE_DIR ${FETCHCONTENT_BASE_DIR_SAVE})
     endif ()
 endif ()
