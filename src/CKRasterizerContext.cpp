@@ -754,7 +754,7 @@ CKDWORD CKRasterizerContext::GetDynamicVertexBuffer(CKDWORD VertexFormat, CKDWOR
     // This ensures different types of vertex data get different buffers
     CKDWORD index = 0;
     // Extract position and normal flags
-    index = VertexFormat & (CKRST_VF_POSITIONMASK | CKRST_VF_NORMAL);
+    index = VertexFormat & (CKRST_VF_RASTERPOS | CKRST_VF_NORMAL);
     // Incorporate diffuse, specular and texture coord flags with proper shifting
     index |= (VertexFormat & (CKRST_VF_DIFFUSE | CKRST_VF_SPECULAR | CKRST_VF_TEXMASK)) >> 3;
     // Shift down to make room for AddKey
